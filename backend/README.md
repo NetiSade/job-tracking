@@ -1,6 +1,6 @@
-# Job Tracking Backend
+# Job Tracking Backend (TypeScript)
 
-Backend API for the Job Tracking application.
+Backend API for the Job Tracking application built with Node.js, Express, and TypeScript.
 
 ## Setup
 
@@ -37,10 +37,23 @@ ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all operations" ON jobs FOR ALL USING (true);
 ```
 
-4. Run the server:
+4. Run the server (development with auto-reload):
 ```bash
 npm run dev
 ```
+
+Or build and run for production:
+```bash
+npm run build
+npm start
+```
+
+## TypeScript
+
+This backend is written in TypeScript with:
+- Strict type checking enabled
+- Full type definitions for Express and Supabase
+- Shared type definitions in `types/index.ts`
 
 ## API Endpoints
 

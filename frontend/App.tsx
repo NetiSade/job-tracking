@@ -8,21 +8,43 @@ import {
   StatusBar,
   RefreshControl,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import JobForm from './components/JobForm';
 import JobList from './components/JobList';
 import { fetchJobs, createJob, updateJob, deleteJob } from './services/api';
+import { signInAnonymously } from './services/auth';
+import { Job, CreateJobInput, UpdateJobInput } from './types';
 
-export default function App() {
-  const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [editingJob, setEditingJob] = useState(null);
+export default function App(): JSX.Element {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
-    loadJobs();
+    initializeAuth();
   }, []);
 
-  const loadJobs = async () => {
+  const initializeAuth = async (): Promise<void> => {
+    try {
+      const token = await signInAnonymously();
+      if (token) {
+        setIsAuthenticated(true);
+        loadJobs();
+      } else {
+        Alert.alert('Error', 'Failed to initialize app. Please restart.');
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+      Alert.alert('Error', 'Failed to initialize app. Please restart.');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const loadJobs = async (): Promise<void> => {
     setLoading(true);
     try {
       const data = await fetchJobs();
@@ -34,7 +56,7 @@ export default function App() {
     }
   };
 
-  const handleCreateJob = async (jobData) => {
+  const handleCreateJob = async (jobData: CreateJobInput): Promise<void> => {
     try {
       const newJob = await createJob(jobData);
       setJobs([newJob, ...jobs]);
@@ -44,7 +66,9 @@ export default function App() {
     }
   };
 
-  const handleUpdateJob = async (jobData) => {
+  const handleUpdateJob = async (jobData: UpdateJobInput): Promise<void> => {
+    if (!editingJob) return;
+    
     try {
       const updatedJob = await updateJob(editingJob.id, jobData);
       setJobs(jobs.map(job => job.id === editingJob.id ? updatedJob : job));
@@ -55,7 +79,7 @@ export default function App() {
     }
   };
 
-  const handleDeleteJob = async (jobId) => {
+  const handleDeleteJob = async (jobId: string): Promise<void> => {
     Alert.alert(
       'Delete Job',
       'Are you sure you want to delete this job?',
@@ -78,13 +102,37 @@ export default function App() {
     );
   };
 
-  const handleEditJob = (job) => {
+  const handleEditJob = (job: Job): void => {
     setEditingJob(job);
   };
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = (): void => {
     setEditingJob(null);
   };
+
+  // Show loading spinner while authenticating
+  if (isAuthenticating) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4a90e2" />
+          <Text style={styles.loadingText}>Initializing...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show error if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.errorText}>Failed to initialize app</Text>
+          <Text style={styles.errorSubtext}>Please restart the application</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -169,6 +217,27 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     marginBottom: 15,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#e74c3c',
+    marginBottom: 8,
+  },
+  errorSubtext: {
+    fontSize: 14,
+    color: '#999',
   },
 });
 

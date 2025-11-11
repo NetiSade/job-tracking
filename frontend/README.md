@@ -1,6 +1,6 @@
-# Job Tracking App - Frontend
+# Job Tracking App - Frontend (TypeScript)
 
-React Native app for tracking job applications.
+React Native app for tracking job applications built with TypeScript and Expo.
 
 ## Setup
 
@@ -36,8 +36,9 @@ npm start
 
 ## Tech Stack
 
-- React Native
+- React Native with TypeScript
 - Expo
 - Axios for API calls
-- React Native Picker for dropdowns
+- Custom Modal-based pickers (no external dependencies)
+- Full type safety with TypeScript interfaces
 

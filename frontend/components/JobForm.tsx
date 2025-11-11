@@ -8,23 +8,31 @@ import {
   Modal,
   ScrollView,
 } from 'react-native';
+import { Job, CreateJobInput, UpdateJobInput, JobStatus, JobPriority, PickerOption } from '../types';
 
-const JobForm = ({ onSubmit, initialValues, isEditing, onCancel }) => {
-  const [company, setCompany] = useState('');
-  const [position, setPosition] = useState('');
-  const [status, setStatus] = useState('wishlist');
-  const [priority, setPriority] = useState('medium');
-  const [comments, setComments] = useState('');
-  const [showStatusPicker, setShowStatusPicker] = useState(false);
-  const [showPriorityPicker, setShowPriorityPicker] = useState(false);
+interface JobFormProps {
+  onSubmit: (jobData: CreateJobInput | UpdateJobInput) => Promise<void>;
+  initialValues: Job | null;
+  isEditing: boolean;
+  onCancel: () => void;
+}
 
-  const statusOptions = [
+const JobForm: React.FC<JobFormProps> = ({ onSubmit, initialValues, isEditing, onCancel }) => {
+  const [company, setCompany] = useState<string>('');
+  const [position, setPosition] = useState<string>('');
+  const [status, setStatus] = useState<JobStatus>('wishlist');
+  const [priority, setPriority] = useState<JobPriority>('medium');
+  const [comments, setComments] = useState<string>('');
+  const [showStatusPicker, setShowStatusPicker] = useState<boolean>(false);
+  const [showPriorityPicker, setShowPriorityPicker] = useState<boolean>(false);
+
+  const statusOptions: PickerOption[] = [
     { label: 'Wishlist', value: 'wishlist' },
     { label: 'In Progress', value: 'in_progress' },
     { label: 'Archived', value: 'archived' },
   ];
 
-  const priorityOptions = [
+  const priorityOptions: PickerOption[] = [
     { label: 'Low', value: 'low' },
     { label: 'Medium', value: 'medium' },
     { label: 'High', value: 'high' },
@@ -40,7 +48,7 @@ const JobForm = ({ onSubmit, initialValues, isEditing, onCancel }) => {
     }
   }, [initialValues]);
 
-  const handleSubmit = () => {
+  const handleSubmit = (): void => {
     if (!company.trim() || !position.trim()) {
       alert('Please fill in company and position');
       return;
@@ -64,7 +72,7 @@ const JobForm = ({ onSubmit, initialValues, isEditing, onCancel }) => {
     }
   };
 
-  const handleCancel = () => {
+  const handleCancel = (): void => {
     setCompany('');
     setPosition('');
     setStatus('wishlist');
@@ -73,17 +81,24 @@ const JobForm = ({ onSubmit, initialValues, isEditing, onCancel }) => {
     onCancel();
   };
 
-  const getStatusLabel = (value) => {
+  const getStatusLabel = (value: JobStatus): string => {
     const option = statusOptions.find(opt => opt.value === value);
     return option ? option.label : value;
   };
 
-  const getPriorityLabel = (value) => {
+  const getPriorityLabel = (value: JobPriority): string => {
     const option = priorityOptions.find(opt => opt.value === value);
     return option ? option.label : value;
   };
 
-  const renderPickerModal = (visible, onClose, options, selectedValue, onSelect, title) => (
+  const renderPickerModal = (
+    visible: boolean,
+    onClose: () => void,
+    options: PickerOption[],
+    selectedValue: string,
+    onSelect: (value: any) => void,
+    title: string
+  ): JSX.Element => (
     <Modal
       visible={visible}
       transparent={true}

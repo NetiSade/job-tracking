@@ -118,18 +118,21 @@ npm start
 
 ## Tech Stack
 
-### Backend
+### Backend (TypeScript)
 - Node.js
 - Express.js
+- TypeScript (strict mode)
 - Supabase (PostgreSQL)
 - CORS
 - dotenv
+- ts-node for development
 
-### Frontend
-- React Native
+### Frontend (TypeScript)
+- React Native with TypeScript
 - Expo
 - Axios
-- React Native Picker
+- Custom Modal-based pickers
+- Full type definitions
 
 ## Contributing
 

@@ -1,8 +1,15 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Job, JobStatus, JobPriority } from '../types';
 
-const JobItem = ({ job, onEdit, onDelete }) => {
-  const getStatusColor = (status) => {
+interface JobItemProps {
+  job: Job;
+  onEdit: (job: Job) => void;
+  onDelete: (jobId: string) => void;
+}
+
+const JobItem: React.FC<JobItemProps> = ({ job, onEdit, onDelete }) => {
+  const getStatusColor = (status: JobStatus): string => {
     switch (status) {
       case 'wishlist':
         return '#9b59b6';
@@ -15,7 +22,7 @@ const JobItem = ({ job, onEdit, onDelete }) => {
     }
   };
 
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = (priority: JobPriority): string => {
     switch (priority) {
       case 'high':
         return '#e74c3c';
@@ -28,11 +35,11 @@ const JobItem = ({ job, onEdit, onDelete }) => {
     }
   };
 
-  const formatStatus = (status) => {
+  const formatStatus = (status: JobStatus): string => {
     return status.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',

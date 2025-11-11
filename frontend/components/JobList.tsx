@@ -1,8 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import JobItem from './JobItem';
+import { Job } from '../types';
 
-const JobList = ({ jobs, onEdit, onDelete }) => {
+interface JobListProps {
+  jobs: Job[];
+  onEdit: (job: Job) => void;
+  onDelete: (jobId: string) => void;
+}
+
+const JobList: React.FC<JobListProps> = ({ jobs, onEdit, onDelete }) => {
   if (jobs.length === 0) {
     return (
       <View style={styles.emptyContainer}>
@@ -15,7 +22,7 @@ const JobList = ({ jobs, onEdit, onDelete }) => {
   return (
     <View style={styles.container}>
       {jobs.map((job, index) => (
-        <View key={job.id} style={index > 0 ? styles.itemSpacing : null}>
+        <View key={job.id} style={index > 0 ? styles.itemSpacing : undefined}>
           <JobItem
             job={job}
             onEdit={onEdit}
