@@ -16,26 +16,14 @@ SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-3. Create the following table in your Supabase database:
+3. Run the SQL migrations in Supabase (SQL Editor):
+   - `database/fresh-install.sql` if this is a brand-new project
+   - `database/migration_add_job_comments.sql` if you are upgrading an existing database
 
-```sql
-CREATE TABLE jobs (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  company TEXT NOT NULL,
-  position TEXT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('wishlist', 'in_progress', 'archived')),
-  priority TEXT NOT NULL CHECK (priority IN ('low', 'medium', 'high')),
-  comments TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Enable Row Level Security (optional, for production)
-ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
-
--- Create a policy that allows all operations (adjust for your needs)
-CREATE POLICY "Allow all operations" ON jobs FOR ALL USING (true);
-```
+These scripts create:
+- `jobs` table (with status/priority columns and RLS policies)
+- `job_comments` table for tracking progress updates per job
+- Trigger to keep `jobs.updated_at` in sync when comments change
 
 4. Run the server (development with auto-reload):
 ```bash
@@ -57,9 +45,16 @@ This backend is written in TypeScript with:
 
 ## API Endpoints
 
-- `GET /api/jobs` - Get all jobs
-- `GET /api/jobs/:id` - Get single job
-- `POST /api/jobs` - Create new job
-- `PUT /api/jobs/:id` - Update job
-- `DELETE /api/jobs/:id` - Delete job
+### Jobs
+- `GET /api/jobs` — Get all jobs (with embedded comments)
+- `GET /api/jobs/:id` — Get a single job (with comments)
+- `POST /api/jobs` — Create a new job
+- `PUT /api/jobs/:id` — Update job details (company, position, status, priority)
+- `DELETE /api/jobs/:id` — Delete a job and its comments
 
+### Comments
+- `POST /api/jobs/:jobId/comments` — Add a new progress comment to a job
+- `PUT /api/comments/:commentId` — Edit an existing comment
+- `DELETE /api/comments/:commentId` — Delete a comment
+
+All endpoints enforce user ownership through Supabase Row Level Security.

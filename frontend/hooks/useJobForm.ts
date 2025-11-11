@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Job, JobStatus, JobPriority, PickerOption } from "../types";
 
 interface UseJobFormReturn {
@@ -6,7 +6,6 @@ interface UseJobFormReturn {
   position: string;
   status: JobStatus;
   priority: JobPriority;
-  comments: string;
   showStatusPicker: boolean;
   showPriorityPicker: boolean;
   isSubmitting: boolean;
@@ -14,7 +13,6 @@ interface UseJobFormReturn {
   setPosition: (value: string) => void;
   setStatus: (value: JobStatus) => void;
   setPriority: (value: JobPriority) => void;
-  setComments: (value: string) => void;
   setShowStatusPicker: (value: boolean) => void;
   setShowPriorityPicker: (value: boolean) => void;
   setIsSubmitting: (value: boolean) => void;
@@ -28,7 +26,6 @@ export const useJobForm = (initialValues?: Job | null): UseJobFormReturn => {
   const [position, setPosition] = useState("");
   const [status, setStatus] = useState<JobStatus>("wishlist");
   const [priority, setPriority] = useState<JobPriority>("medium");
-  const [comments, setComments] = useState("");
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [showPriorityPicker, setShowPriorityPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,30 +42,32 @@ export const useJobForm = (initialValues?: Job | null): UseJobFormReturn => {
     { label: "High", value: "high" },
   ];
 
+  const resetForm = useCallback((): void => {
+    setCompany("");
+    setPosition("");
+    setStatus("wishlist");
+    setPriority("medium");
+    setShowStatusPicker(false);
+    setShowPriorityPicker(false);
+    setIsSubmitting(false);
+  }, []);
+
   useEffect(() => {
     if (initialValues) {
       setCompany(initialValues.company || "");
       setPosition(initialValues.position || "");
       setStatus(initialValues.status || "wishlist");
       setPriority(initialValues.priority || "medium");
-      setComments(initialValues.comments || "");
+    } else {
+      resetForm();
     }
-  }, [initialValues]);
-
-  const resetForm = (): void => {
-    setCompany("");
-    setPosition("");
-    setStatus("wishlist");
-    setPriority("medium");
-    setComments("");
-  };
+  }, [initialValues, resetForm]);
 
   return {
     company,
     position,
     status,
     priority,
-    comments,
     showStatusPicker,
     showPriorityPicker,
     isSubmitting,
@@ -76,7 +75,6 @@ export const useJobForm = (initialValues?: Job | null): UseJobFormReturn => {
     setPosition,
     setStatus,
     setPriority,
-    setComments,
     setShowStatusPicker,
     setShowPriorityPicker,
     setIsSubmitting,
@@ -85,4 +83,3 @@ export const useJobForm = (initialValues?: Job | null): UseJobFormReturn => {
     priorityOptions,
   };
 };
-

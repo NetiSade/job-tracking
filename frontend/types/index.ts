@@ -1,6 +1,15 @@
 export type JobStatus = 'wishlist' | 'in_progress' | 'archived';
 export type JobPriority = 'low' | 'medium' | 'high';
 
+export interface JobComment {
+  id: string;
+  job_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Job {
   id: string;
   user_id: string;
@@ -8,9 +17,9 @@ export interface Job {
   position: string;
   status: JobStatus;
   priority: JobPriority;
-  comments: string;
   created_at: string;
   updated_at: string;
+  comments: JobComment[];
 }
 
 export interface CreateJobInput {
@@ -18,7 +27,6 @@ export interface CreateJobInput {
   position: string;
   status: JobStatus;
   priority: JobPriority;
-  comments: string;
 }
 
 export interface UpdateJobInput {
@@ -26,11 +34,17 @@ export interface UpdateJobInput {
   position: string;
   status: JobStatus;
   priority: JobPriority;
-  comments: string;
+}
+
+export interface CreateCommentInput {
+  content: string;
+}
+
+export interface UpdateCommentInput {
+  content: string;
 }
 
 export interface PickerOption {
   label: string;
   value: string;
 }
-

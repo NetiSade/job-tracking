@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { Job, CreateJobInput, UpdateJobInput } from "../types";
+import { Job, CreateJobInput, UpdateJobInput, JobStatus, JobPriority } from "../types";
 import { useJobForm } from "../hooks/useJobForm";
 import PickerModal from "./PickerModal";
 
@@ -32,7 +32,6 @@ const JobFormModal: React.FC<JobFormModalProps> = ({
     position,
     status,
     priority,
-    comments,
     showStatusPicker,
     showPriorityPicker,
     isSubmitting,
@@ -40,7 +39,6 @@ const JobFormModal: React.FC<JobFormModalProps> = ({
     setPosition,
     setStatus,
     setPriority,
-    setComments,
     setShowStatusPicker,
     setShowPriorityPicker,
     setIsSubmitting,
@@ -66,7 +64,6 @@ const JobFormModal: React.FC<JobFormModalProps> = ({
         position: position.trim(),
         status,
         priority,
-        comments: comments.trim(),
       });
 
       if (!isEditing) {
@@ -78,50 +75,34 @@ const JobFormModal: React.FC<JobFormModalProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [
-    company,
-    position,
-    status,
-    priority,
-    comments,
-    isEditing,
-    onSubmit,
-    onClose,
-    resetForm,
-  ]);
+  }, [company, position, status, priority, isEditing, onSubmit, onClose, resetForm]);
 
   const handleClose = useCallback((): void => {
     resetForm();
     onClose();
   }, [resetForm, onClose]);
 
-  const getStatusLabel = (value: string): string => {
-    return (
-      statusOptions.find((opt) => opt.value === value)?.label || value
-    );
-  };
+  const getStatusLabel = (value: string): string =>
+    statusOptions.find((opt) => opt.value === value)?.label || value;
 
-  const getPriorityLabel = (value: string): string => {
-    return (
-      priorityOptions.find((opt) => opt.value === value)?.label || value
-    );
-  };
+  const getPriorityLabel = (value: string): string =>
+    priorityOptions.find((opt) => opt.value === value)?.label || value;
 
   const openStatusPicker = useCallback((): void => {
     setShowStatusPicker(true);
-  }, []);
+  }, [setShowStatusPicker]);
 
   const closeStatusPicker = useCallback((): void => {
     setShowStatusPicker(false);
-  }, []);
+  }, [setShowStatusPicker]);
 
   const openPriorityPicker = useCallback((): void => {
     setShowPriorityPicker(true);
-  }, []);
+  }, [setShowPriorityPicker]);
 
   const closePriorityPicker = useCallback((): void => {
     setShowPriorityPicker(false);
-  }, []);
+  }, [setShowPriorityPicker]);
 
   return (
     <Modal
@@ -201,20 +182,6 @@ const JobFormModal: React.FC<JobFormModalProps> = ({
               </TouchableOpacity>
             </View>
           </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Comments</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={comments}
-              onChangeText={setComments}
-              placeholder="Add notes about this application..."
-              placeholderTextColor="#999"
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
         </ScrollView>
 
         <PickerModal
@@ -222,7 +189,7 @@ const JobFormModal: React.FC<JobFormModalProps> = ({
           title="Select Status"
           options={statusOptions}
           selectedValue={status}
-          onSelect={(value) => setStatus(value as any)}
+          onSelect={(value) => setStatus(value as JobStatus)}
           onClose={closeStatusPicker}
         />
 
@@ -231,7 +198,7 @@ const JobFormModal: React.FC<JobFormModalProps> = ({
           title="Select Priority"
           options={priorityOptions}
           selectedValue={priority}
-          onSelect={(value) => setPriority(value as any)}
+          onSelect={(value) => setPriority(value as JobPriority)}
           onClose={closePriorityPicker}
         />
       </KeyboardAvoidingView>
@@ -300,10 +267,6 @@ const styles = StyleSheet.create({
     padding: 14,
     fontSize: 16,
     backgroundColor: "#ffffff",
-  },
-  textArea: {
-    minHeight: 120,
-    paddingTop: 14,
   },
   pickerButton: {
     borderWidth: 1,

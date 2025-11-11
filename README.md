@@ -6,34 +6,39 @@ A full-stack React Native application for tracking job applications with a Node.
 
 ```
 job-tracking-app/
-├── backend/          # Node.js Express API
-│   ├── config/       # Supabase configuration
-│   ├── routes/       # API routes
-│   ├── server.js     # Main server file
+├── backend/
+│   ├── config/             # Supabase configuration helpers
+│   ├── routes/             # API route handlers (jobs, auth, comments)
+│   ├── database/           # SQL migration scripts
+│   ├── types/              # Shared backend TypeScript interfaces
+│   ├── server.ts           # Express server entry point
 │   └── package.json
-├── frontend/         # React Native app
-│   ├── components/   # React components
-│   ├── services/     # API service layer
-│   ├── App.js        # Main app component
+├── frontend/
+│   ├── components/         # Reusable React Native components
+│   ├── hooks/              # Custom hooks for data & form logic
+│   ├── services/           # API clients and auth helpers
+│   ├── utils/              # Shared utilities (dates, styling)
+│   ├── App.tsx             # Main application component
+│   ├── tsconfig.json
 │   └── package.json
 └── README.md
 ```
 
 ## Features
 
-- **Add Jobs**: Create new job applications with company, position, status, priority, and comments
-- **View Jobs**: See all applications in an organized list with color-coded status and priority badges
-- **Edit Jobs**: Update any job application details
-- **Delete Jobs**: Remove job applications you no longer need
-- **Status Tracking**: Track applications as "Wishlist", "In Progress", or "Archived"
-- **Priority Levels**: Mark applications as "Low", "Medium", or "High" priority
-- **Comments**: Add notes and reminders for each application
+- **Job Management**: Create, edit, and delete applications with company, position, status, and priority
+- **Progress Timeline**: Maintain a chronological list of comments for each job (add & edit comments)
+- **Timestamp Visibility**: Display the last updated date on every job card and the exact time for each comment
+- **Status Filtering**: Quickly filter jobs by `Wishlist`, `In Progress`, `Archived`, or view `All`
+- **Priority Badges**: Color-coded priorities (`Low`, `Medium`, `High`) for quick scanning
+- **Modern UI**: Floating action button, modal forms, and clean typography
+- **Pull to Refresh**: Manually refresh the job list to sync with the backend
 
 ## Setup Instructions
 
 ### Prerequisites
 
-- Node.js (v14 or higher)
+- Node.js (v16 or higher recommended)
 - npm or yarn
 - Supabase account
 - Expo CLI (for React Native)
@@ -57,29 +62,16 @@ SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-4. Create the database table in Supabase:
-```sql
-CREATE TABLE jobs (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  company TEXT NOT NULL,
-  position TEXT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('wishlist', 'in_progress', 'archived')),
-  priority TEXT NOT NULL CHECK (priority IN ('low', 'medium', 'high')),
-  comments TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all operations" ON jobs FOR ALL USING (true);
-```
+4. Run the SQL scripts in `database/` via the Supabase SQL Editor:
+   - `fresh-install.sql` for new projects
+   - `migration_add_job_comments.sql` to upgrade an existing database with comment support
 
 5. Start the server:
 ```bash
 npm run dev
 ```
 
-The backend will run on `http://localhost:3000`
+The backend will run on `http://localhost:3000`.
 
 ### Frontend Setup
 
@@ -93,10 +85,9 @@ cd frontend
 npm install
 ```
 
-3. Update `config.js` with your backend URL:
-   - For iOS Simulator: `http://localhost:3000/api`
-   - For Android Emulator: `http://10.0.2.2:3000/api`
-   - For Physical Device: `http://YOUR_IP:3000/api`
+3. Configure API/Supabase URLs by either:
+   - Creating an `.env` file (`EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_SUPABASE_URL`, etc.), or
+   - Editing `config.ts` directly with the correct values (`http://localhost:3000/api`, `http://10.0.2.2:3000/api`, or `http://YOUR_IP:3000/api`)
 
 4. Start the Expo dev server:
 ```bash
@@ -104,17 +95,25 @@ npm start
 ```
 
 5. Run the app:
-   - Press `i` for iOS
-   - Press `a` for Android
-   - Scan QR code with Expo Go for physical device
+   - Press `i` for iOS Simulator
+   - Press `a` for Android emulator
+   - Scan the QR code with Expo Go on a physical device (ensure the device shares the same network)
 
 ## API Endpoints
 
-- `GET /api/jobs` - Get all jobs
-- `GET /api/jobs/:id` - Get single job
-- `POST /api/jobs` - Create new job
-- `PUT /api/jobs/:id` - Update job
-- `DELETE /api/jobs/:id` - Delete job
+### Jobs
+- `GET /api/jobs` — Get all jobs (with embedded comments)
+- `GET /api/jobs/:id` — Get a single job
+- `POST /api/jobs` — Create a new job
+- `PUT /api/jobs/:id` — Update job details
+- `DELETE /api/jobs/:id` — Delete a job
+
+### Comments
+- `POST /api/jobs/:jobId/comments` — Add a new comment to a job
+- `PUT /api/comments/:commentId` — Update an existing comment
+- `DELETE /api/comments/:commentId` — Delete a comment
+
+All endpoints are protected with Supabase Row Level Security to ensure each user only accesses their own data.
 
 ## Tech Stack
 
@@ -131,8 +130,8 @@ npm start
 - React Native with TypeScript
 - Expo
 - Axios
-- Custom Modal-based pickers
-- Full type definitions
+- Custom hooks and reusable components
+- Typed data models shared across the app
 
 ## Contributing
 
@@ -141,4 +140,3 @@ Feel free to submit issues and enhancement requests!
 ## License
 
 MIT
-

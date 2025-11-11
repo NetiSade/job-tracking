@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   StyleSheet,
   View,
@@ -11,12 +11,13 @@ import AppHeader from "./components/AppHeader";
 import FilterTabs from "./components/FilterTabs";
 import FloatingActionButton from "./components/FloatingActionButton";
 import JobFormModal from "./components/JobFormModal";
+import JobCommentsModal from "./components/JobCommentsModal";
 import JobList from "./components/JobList";
 import LoadingScreen from "./components/LoadingScreen";
 import ErrorScreen from "./components/ErrorScreen";
 import { useAuth } from "./hooks/useAuth";
 import { useJobs } from "./hooks/useJobs";
-import { Job } from "./types";
+import { Job, CreateJobInput, UpdateJobInput } from "./types";
 
 export default function App(): JSX.Element {
   const { isAuthenticating, isAuthenticated } = useAuth();
@@ -29,39 +30,64 @@ export default function App(): JSX.Element {
     handleCreateJob,
     handleUpdateJob,
     handleDeleteJob,
+    handleAddComment,
+    handleUpdateComment,
+    handleDeleteComment,
     getFilteredJobs,
     getJobCountByStatus,
   } = useJobs(isAuthenticated);
 
-  const [showModal, setShowModal] = useState(false);
+  const [isJobFormVisible, setIsJobFormVisible] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [visibleCommentsJobId, setVisibleCommentsJobId] = useState<string | null>(
+    null
+  );
+  const [isCommentsModalVisible, setIsCommentsModalVisible] = useState(false);
+
+  const commentJob = useMemo(
+    () =>
+      visibleCommentsJobId
+        ? jobs.find((job) => job.id === visibleCommentsJobId) ?? null
+        : null,
+    [jobs, visibleCommentsJobId]
+  );
 
   const handleOpenAddModal = useCallback((): void => {
     setEditingJob(null);
-    setShowModal(true);
+    setIsJobFormVisible(true);
   }, []);
 
   const handleEditJob = useCallback((job: Job): void => {
     setEditingJob(job);
-    setShowModal(true);
+    setIsJobFormVisible(true);
   }, []);
 
-  const handleCloseModal = useCallback((): void => {
+  const handleCloseJobForm = useCallback((): void => {
     setEditingJob(null);
-    setShowModal(false);
+    setIsJobFormVisible(false);
   }, []);
 
-  const handleSubmit = useCallback(
-    async (jobData: any): Promise<void> => {
+  const handleSubmitJob = useCallback(
+    async (jobData: CreateJobInput | UpdateJobInput): Promise<void> => {
       if (editingJob) {
-        await handleUpdateJob(editingJob.id, jobData);
+        await handleUpdateJob(editingJob.id, jobData as UpdateJobInput);
       } else {
-        await handleCreateJob(jobData);
+        await handleCreateJob(jobData as CreateJobInput);
       }
-      handleCloseModal();
+      handleCloseJobForm();
     },
-    [editingJob, handleUpdateJob, handleCreateJob, handleCloseModal]
+    [editingJob, handleUpdateJob, handleCreateJob, handleCloseJobForm]
   );
+
+  const handleViewComments = useCallback((job: Job): void => {
+    setVisibleCommentsJobId(job.id);
+    setIsCommentsModalVisible(true);
+  }, []);
+
+  const handleCloseComments = useCallback((): void => {
+    setIsCommentsModalVisible(false);
+    setVisibleCommentsJobId(null);
+  }, []);
 
   if (isAuthenticating) {
     return (
@@ -106,6 +132,7 @@ export default function App(): JSX.Element {
             jobs={getFilteredJobs()}
             onEdit={handleEditJob}
             onDelete={handleDeleteJob}
+            onViewComments={handleViewComments}
           />
         </View>
       </ScrollView>
@@ -113,10 +140,19 @@ export default function App(): JSX.Element {
       <FloatingActionButton onPress={handleOpenAddModal} />
 
       <JobFormModal
-        visible={showModal}
-        onClose={handleCloseModal}
-        onSubmit={handleSubmit}
+        visible={isJobFormVisible}
+        onClose={handleCloseJobForm}
+        onSubmit={handleSubmitJob}
         initialValues={editingJob}
+      />
+
+      <JobCommentsModal
+        visible={isCommentsModalVisible}
+        job={commentJob}
+        onClose={handleCloseComments}
+        onAddComment={handleAddComment}
+        onUpdateComment={handleUpdateComment}
+        onDeleteComment={handleDeleteComment}
       />
     </SafeAreaView>
   );
