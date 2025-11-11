@@ -1,8 +1,8 @@
-import React, { useCallback, memo } from "react";
+import React, { useCallback, useMemo, memo } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Job, JobStatus } from "../types";
 import { getStatusColor, getPriorityColor } from "../utils/jobStyles";
-import { formatDate, formatDateTime, isDifferentTimestamp } from "../utils/date";
+import { formatDateTime, isDifferentTimestamp } from "../utils/date";
 
 interface JobItemProps {
   job: Job;
@@ -29,6 +29,7 @@ const JobItem: React.FC<JobItemProps> = ({ job, onEdit, onDelete, onViewComments
 
   const commentCount = job.comments?.length ?? 0;
   const lastComment = job.comments?.[0];
+  const displayedComments = useMemo(() => (job.comments || []).slice(0, 5), [job.comments]);
 
   const lastCommentLabel = lastComment
     ? `Last comment ${formatDateTime(lastComment.updated_at)}`
@@ -75,6 +76,19 @@ const JobItem: React.FC<JobItemProps> = ({ job, onEdit, onDelete, onViewComments
 
         {lastComment && isDifferentTimestamp(lastComment.created_at, lastComment.updated_at) && (
           <Text style={styles.metaNote}>Edited comment</Text>
+        )}
+
+        {displayedComments.length > 0 && (
+          <View style={styles.commentsPreview}>
+            {displayedComments.map((comment) => (
+              <View key={comment.id} style={styles.commentRow}>
+                <Text style={styles.commentTimestamp}>{formatDateTime(comment.updated_at)}</Text>
+                <Text style={styles.commentText} numberOfLines={2}>
+                  {comment.content}
+                </Text>
+              </View>
+            ))}
+          </View>
         )}
       </View>
 
@@ -174,6 +188,28 @@ const styles = StyleSheet.create({
     color: "#999",
     marginTop: 4,
     fontStyle: "italic",
+  },
+  commentsPreview: {
+    marginTop: 12,
+    gap: 8,
+  },
+  commentRow: {
+    backgroundColor: "#f7f9fc",
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#e0e6f0",
+  },
+  commentTimestamp: {
+    fontSize: 12,
+    color: "#4a90e2",
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  commentText: {
+    fontSize: 13,
+    color: "#333",
+    lineHeight: 18,
   },
   actions: {
     flexDirection: "row",
