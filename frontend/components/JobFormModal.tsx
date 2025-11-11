@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback } from "react";
 import {
   View,
   Text,
@@ -9,8 +9,10 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { Job, CreateJobInput, UpdateJobInput, JobStatus, JobPriority, PickerOption } from '../types';
+} from "react-native";
+import { Job, CreateJobInput, UpdateJobInput } from "../types";
+import { useJobForm } from "../hooks/useJobForm";
+import PickerModal from "./PickerModal";
 
 interface JobFormModalProps {
   visible: boolean;
@@ -19,52 +21,41 @@ interface JobFormModalProps {
   initialValues?: Job | null;
 }
 
-const JobFormModal: React.FC<JobFormModalProps> = ({ visible, onClose, onSubmit, initialValues }) => {
-  const [company, setCompany] = useState<string>('');
-  const [position, setPosition] = useState<string>('');
-  const [status, setStatus] = useState<JobStatus>('wishlist');
-  const [priority, setPriority] = useState<JobPriority>('medium');
-  const [comments, setComments] = useState<string>('');
-  const [showStatusPicker, setShowStatusPicker] = useState<boolean>(false);
-  const [showPriorityPicker, setShowPriorityPicker] = useState<boolean>(false);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+const JobFormModal: React.FC<JobFormModalProps> = ({
+  visible,
+  onClose,
+  onSubmit,
+  initialValues,
+}) => {
+  const {
+    company,
+    position,
+    status,
+    priority,
+    comments,
+    showStatusPicker,
+    showPriorityPicker,
+    isSubmitting,
+    setCompany,
+    setPosition,
+    setStatus,
+    setPriority,
+    setComments,
+    setShowStatusPicker,
+    setShowPriorityPicker,
+    setIsSubmitting,
+    resetForm,
+    statusOptions,
+    priorityOptions,
+  } = useJobForm(initialValues);
 
-  const statusOptions: PickerOption[] = [
-    { label: 'Wishlist', value: 'wishlist' },
-    { label: 'In Progress', value: 'in_progress' },
-    { label: 'Archived', value: 'archived' },
-  ];
+  const isEditing = !!initialValues;
+  const title = isEditing ? "Edit Job" : "Add New Job";
+  const submitLabel = isSubmitting ? "Saving..." : "Save";
 
-  const priorityOptions: PickerOption[] = [
-    { label: 'Low', value: 'low' },
-    { label: 'Medium', value: 'medium' },
-    { label: 'High', value: 'high' },
-  ];
-
-  useEffect(() => {
-    if (initialValues) {
-      setCompany(initialValues.company || '');
-      setPosition(initialValues.position || '');
-      setStatus(initialValues.status || 'wishlist');
-      setPriority(initialValues.priority || 'medium');
-      setComments(initialValues.comments || '');
-    } else {
-      // Reset form when opening to add new job
-      resetForm();
-    }
-  }, [initialValues, visible]);
-
-  const resetForm = (): void => {
-    setCompany('');
-    setPosition('');
-    setStatus('wishlist');
-    setPriority('medium');
-    setComments('');
-  };
-
-  const handleSubmit = async (): Promise<void> => {
+  const handleSubmit = useCallback(async (): Promise<void> => {
     if (!company.trim() || !position.trim()) {
-      alert('Please fill in company and position');
+      alert("Please fill in company and position");
       return;
     }
 
@@ -77,87 +68,60 @@ const JobFormModal: React.FC<JobFormModalProps> = ({ visible, onClose, onSubmit,
         priority,
         comments: comments.trim(),
       });
-      
-      if (!initialValues) {
+
+      if (!isEditing) {
         resetForm();
       }
       onClose();
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error("Error submitting form:", error);
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [
+    company,
+    position,
+    status,
+    priority,
+    comments,
+    isEditing,
+    onSubmit,
+    onClose,
+    resetForm,
+  ]);
 
-  const handleClose = (): void => {
+  const handleClose = useCallback((): void => {
     resetForm();
     onClose();
+  }, [resetForm, onClose]);
+
+  const getStatusLabel = (value: string): string => {
+    return (
+      statusOptions.find((opt) => opt.value === value)?.label || value
+    );
   };
 
-  const getStatusLabel = (value: JobStatus): string => {
-    const option = statusOptions.find(opt => opt.value === value);
-    return option ? option.label : value;
+  const getPriorityLabel = (value: string): string => {
+    return (
+      priorityOptions.find((opt) => opt.value === value)?.label || value
+    );
   };
 
-  const getPriorityLabel = (value: JobPriority): string => {
-    const option = priorityOptions.find(opt => opt.value === value);
-    return option ? option.label : value;
-  };
+  const openStatusPicker = useCallback((): void => {
+    setShowStatusPicker(true);
+  }, []);
 
-  const renderPickerModal = (
-    visible: boolean,
-    onClose: () => void,
-    options: PickerOption[],
-    selectedValue: string,
-    onSelect: (value: any) => void,
-    title: string
-  ): JSX.Element => (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <TouchableOpacity 
-        style={styles.pickerOverlay} 
-        activeOpacity={1} 
-        onPress={onClose}
-      >
-        <View style={styles.pickerContent}>
-          <View style={styles.pickerHeader}>
-            <Text style={styles.pickerTitle}>{title}</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Text style={styles.pickerClose}>Done</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView>
-            {options.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={[
-                  styles.pickerOption,
-                  selectedValue === option.value && styles.pickerOptionSelected,
-                ]}
-                onPress={() => {
-                  onSelect(option.value);
-                  onClose();
-                }}
-              >
-                <Text
-                  style={[
-                    styles.pickerOptionText,
-                    selectedValue === option.value && styles.pickerOptionTextSelected,
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      </TouchableOpacity>
-    </Modal>
-  );
+  const closeStatusPicker = useCallback((): void => {
+    setShowStatusPicker(false);
+  }, []);
+
+  const openPriorityPicker = useCallback((): void => {
+    setShowPriorityPicker(true);
+  }, []);
+
+  const closePriorityPicker = useCallback((): void => {
+    setShowPriorityPicker(false);
+  }, []);
 
   return (
     <Modal
@@ -167,19 +131,22 @@ const JobFormModal: React.FC<JobFormModalProps> = ({ visible, onClose, onSubmit,
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
       >
         <View style={styles.header}>
           <TouchableOpacity onPress={handleClose}>
             <Text style={styles.cancelButton}>Cancel</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            {initialValues ? 'Edit Job' : 'Add New Job'}
-          </Text>
+          <Text style={styles.headerTitle}>{title}</Text>
           <TouchableOpacity onPress={handleSubmit} disabled={isSubmitting}>
-            <Text style={[styles.saveButton, isSubmitting && styles.saveButtonDisabled]}>
-              {isSubmitting ? 'Saving...' : 'Save'}
+            <Text
+              style={[
+                styles.saveButton,
+                isSubmitting && styles.saveButtonDisabled,
+              ]}
+            >
+              {submitLabel}
             </Text>
           </TouchableOpacity>
         </View>
@@ -212,9 +179,11 @@ const JobFormModal: React.FC<JobFormModalProps> = ({ visible, onClose, onSubmit,
               <Text style={styles.label}>Status</Text>
               <TouchableOpacity
                 style={styles.pickerButton}
-                onPress={() => setShowStatusPicker(true)}
+                onPress={openStatusPicker}
               >
-                <Text style={styles.pickerButtonText}>{getStatusLabel(status)}</Text>
+                <Text style={styles.pickerButtonText}>
+                  {getStatusLabel(status)}
+                </Text>
                 <Text style={styles.pickerButtonArrow}>▼</Text>
               </TouchableOpacity>
             </View>
@@ -223,9 +192,11 @@ const JobFormModal: React.FC<JobFormModalProps> = ({ visible, onClose, onSubmit,
               <Text style={styles.label}>Priority</Text>
               <TouchableOpacity
                 style={styles.pickerButton}
-                onPress={() => setShowPriorityPicker(true)}
+                onPress={openPriorityPicker}
               >
-                <Text style={styles.pickerButtonText}>{getPriorityLabel(priority)}</Text>
+                <Text style={styles.pickerButtonText}>
+                  {getPriorityLabel(priority)}
+                </Text>
                 <Text style={styles.pickerButtonArrow}>▼</Text>
               </TouchableOpacity>
             </View>
@@ -246,23 +217,23 @@ const JobFormModal: React.FC<JobFormModalProps> = ({ visible, onClose, onSubmit,
           </View>
         </ScrollView>
 
-        {renderPickerModal(
-          showStatusPicker,
-          () => setShowStatusPicker(false),
-          statusOptions,
-          status,
-          setStatus,
-          'Select Status'
-        )}
+        <PickerModal
+          visible={showStatusPicker}
+          title="Select Status"
+          options={statusOptions}
+          selectedValue={status}
+          onSelect={(value) => setStatus(value as any)}
+          onClose={closeStatusPicker}
+        />
 
-        {renderPickerModal(
-          showPriorityPicker,
-          () => setShowPriorityPicker(false),
-          priorityOptions,
-          priority,
-          setPriority,
-          'Select Priority'
-        )}
+        <PickerModal
+          visible={showPriorityPicker}
+          title="Select Priority"
+          options={priorityOptions}
+          selectedValue={priority}
+          onSelect={(value) => setPriority(value as any)}
+          onClose={closePriorityPicker}
+        />
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -271,34 +242,34 @@ const JobFormModal: React.FC<JobFormModalProps> = ({ visible, onClose, onSubmit,
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: "#e0e0e0",
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
   },
   cancelButton: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   saveButton: {
     fontSize: 16,
-    color: '#4a90e2',
-    fontWeight: '600',
+    color: "#4a90e2",
+    fontWeight: "600",
   },
   saveButtonDisabled: {
-    color: '#999',
+    color: "#999",
   },
   content: {
     flex: 1,
@@ -308,8 +279,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginHorizontal: -6,
   },
   halfWidth: {
@@ -318,17 +289,17 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 10,
     padding: 14,
     fontSize: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
   textArea: {
     minHeight: 120,
@@ -336,68 +307,22 @@ const styles = StyleSheet.create({
   },
   pickerButton: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 10,
     padding: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#ffffff",
   },
   pickerButtonText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   pickerButtonArrow: {
     fontSize: 12,
-    color: '#666',
-  },
-  pickerOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  pickerContent: {
-    backgroundColor: '#ffffff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '60%',
-  },
-  pickerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  pickerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  pickerClose: {
-    fontSize: 16,
-    color: '#4a90e2',
-    fontWeight: '600',
-  },
-  pickerOption: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  pickerOptionSelected: {
-    backgroundColor: '#e8f4fd',
-  },
-  pickerOptionText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  pickerOptionTextSelected: {
-    color: '#4a90e2',
-    fontWeight: '600',
+    color: "#666",
   },
 });
 
 export default JobFormModal;
-
