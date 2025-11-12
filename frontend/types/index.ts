@@ -1,5 +1,4 @@
 export type JobStatus = 'wishlist' | 'in_progress' | 'archived';
-export type JobPriority = 'low' | 'medium' | 'high';
 
 export interface JobComment {
   id: string;
@@ -16,7 +15,8 @@ export interface Job {
   company: string;
   position: string;
   status: JobStatus;
-  priority: JobPriority;
+  sort_order: number;
+  salary_expectations?: string | null;
   created_at: string;
   updated_at: string;
   comments: JobComment[];
@@ -26,14 +26,18 @@ export interface CreateJobInput {
   company: string;
   position: string;
   status: JobStatus;
-  priority: JobPriority;
+  salary_expectations?: string | null;
 }
 
 export interface UpdateJobInput {
-  company: string;
-  position: string;
-  status: JobStatus;
-  priority: JobPriority;
+  company?: string;
+  position?: string;
+  status?: JobStatus;
+  salary_expectations?: string | null;
+}
+
+export interface ReorderJobsInput {
+  orders: Array<{ id: string; sort_order: number }>;
 }
 
 export interface CreateCommentInput {

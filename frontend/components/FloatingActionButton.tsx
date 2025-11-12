@@ -39,7 +39,9 @@ const styles = StyleSheet.create({
   icon: {
     fontSize: 32,
     color: "#ffffff",
-    fontWeight: "300",
+    fontWeight: "600",
+    textAlign: "center",
+    lineHeight: 60,
   },
 });
 

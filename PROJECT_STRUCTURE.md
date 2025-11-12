@@ -69,8 +69,8 @@ job-tracking-app/
 | company     | TEXT      | NOT NULL                                              |
 | position    | TEXT      | NOT NULL                                              |
 | status      | TEXT      | NOT NULL, CHECK IN ('wishlist', 'in_progress', 'archived') |
-| priority    | TEXT      | NOT NULL, CHECK IN ('low', 'medium', 'high')          |
-| comments    | TEXT      | Optional                                              |
+| sort_order  | INTEGER   | NOT NULL, unique per user                             |
+| salary_expectations | TEXT | Optional                                         |
 | created_at  | TIMESTAMP | Default NOW()                                         |
 | updated_at  | TIMESTAMP | Default NOW()                                         |
 
@@ -82,6 +82,7 @@ job-tracking-app/
 | GET    | /api/jobs/:id   | Get single job       |
 | POST   | /api/jobs       | Create new job       |
 | PUT    | /api/jobs/:id   | Update existing job  |
+| PUT    | /api/jobs/reorder | Persist a reordered list of jobs |
 | DELETE | /api/jobs/:id   | Delete job           |
 
 ## Tech Stack Summary
@@ -97,7 +98,9 @@ job-tracking-app/
 - React Native
 - Expo (for easy development)
 - Axios (HTTP client)
-- React Native Picker (dropdown component)
+- react-native-draggable-flatlist (drag-and-drop ordering)
+- react-native-gesture-handler
+- react-native-reanimated
 - Native styling with StyleSheet
 
 ## Development Workflow

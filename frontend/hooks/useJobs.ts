@@ -8,6 +8,7 @@ import {
   addJobComment,
   updateJobComment,
   deleteJobComment,
+  reorderJobs,
 } from "../services/api";
 import {
   Job,
@@ -17,6 +18,10 @@ import {
   JobComment,
 } from "../types";
 
+interface UpdateJobOptions {
+  successMessage?: string | false;
+}
+
 interface UseJobsReturn {
   jobs: Job[];
   loading: boolean;
@@ -24,7 +29,11 @@ interface UseJobsReturn {
   setActiveFilter: (filter: JobStatus | "all") => void;
   loadJobs: () => Promise<void>;
   handleCreateJob: (jobData: CreateJobInput) => Promise<void>;
-  handleUpdateJob: (jobId: string, jobData: UpdateJobInput) => Promise<void>;
+  handleUpdateJob: (
+    jobId: string,
+    jobData: UpdateJobInput,
+    options?: UpdateJobOptions
+  ) => Promise<void>;
   handleDeleteJob: (jobId: string) => void;
   handleAddComment: (jobId: string, content: string) => Promise<JobComment>;
   handleUpdateComment: (
@@ -33,15 +42,13 @@ interface UseJobsReturn {
     content: string
   ) => Promise<JobComment>;
   handleDeleteComment: (jobId: string, commentId: string) => Promise<void>;
+  handleReorderJobs: (reorderedJobs: Job[]) => Promise<void>;
   getFilteredJobs: () => Job[];
   getJobCountByStatus: (status: JobStatus) => number;
 }
 
-const sortJobsByUpdated = (list: Job[]): Job[] =>
-  [...list].sort(
-    (a, b) =>
-      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-  );
+const sortJobsByOrder = (list: Job[]): Job[] =>
+  [...list].sort((a, b) => a.sort_order - b.sort_order);
 
 const sortCommentsByCreated = (comments: JobComment[]): JobComment[] =>
   [...comments].sort(
@@ -56,8 +63,8 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
     "in_progress"
   );
 
-  const setJobsWithSort = useCallback((updater: (jobs: Job[]) => Job[]) => {
-    setJobs((prevJobs) => sortJobsByUpdated(updater(prevJobs)));
+  const setJobsWithOrder = useCallback((updater: (jobs: Job[]) => Job[]) => {
+    setJobs((prevJobs) => sortJobsByOrder(updater(prevJobs)));
   }, []);
 
   const loadJobs = useCallback(async (): Promise<void> => {
@@ -68,7 +75,7 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
         ...job,
         comments: sortCommentsByCreated(job.comments || []),
       }));
-      setJobs(sortJobsByUpdated(normalized));
+      setJobs(sortJobsByOrder(normalized));
     } catch (error) {
       console.error('[useJobs] Failed to load jobs', error);
       Alert.alert("Error", "Failed to load jobs");
@@ -91,34 +98,44 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
           ...newJob,
           comments: sortCommentsByCreated(newJob.comments || []),
         };
-        setJobsWithSort((prevJobs) => [normalizedJob, ...prevJobs]);
+        setJobsWithOrder((prevJobs) => [...prevJobs, normalizedJob]);
         Alert.alert("Success", "Job added successfully");
       } catch (error) {
         Alert.alert("Error", "Failed to create job");
         throw error;
       }
     },
-    [setJobsWithSort]
+    [setJobsWithOrder]
   );
 
   const handleUpdateJob = useCallback(
-    async (jobId: string, jobData: UpdateJobInput): Promise<void> => {
+    async (
+      jobId: string,
+      jobData: UpdateJobInput,
+      options?: UpdateJobOptions
+    ): Promise<void> => {
       try {
         const updatedJob = await updateJob(jobId, jobData);
         const normalizedJob = {
           ...updatedJob,
           comments: sortCommentsByCreated(updatedJob.comments || []),
         };
-        setJobsWithSort((prevJobs) =>
+        setJobsWithOrder((prevJobs) =>
           prevJobs.map((job) => (job.id === jobId ? normalizedJob : job))
         );
-        Alert.alert("Success", "Job updated successfully");
+        const successMessage =
+          options?.successMessage === undefined
+            ? "Job updated successfully"
+            : options.successMessage;
+        if (successMessage) {
+          Alert.alert("Success", successMessage);
+        }
       } catch (error) {
         Alert.alert("Error", "Failed to update job");
         throw error;
       }
     },
-    [setJobsWithSort]
+    [setJobsWithOrder]
   );
 
   const handleDeleteJob = useCallback((jobId: string): void => {
@@ -130,7 +147,7 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
         onPress: async () => {
           try {
             await deleteJob(jobId);
-            setJobsWithSort((prevJobs) =>
+            setJobsWithOrder((prevJobs) =>
               prevJobs.filter((job) => job.id !== jobId)
             );
             Alert.alert("Success", "Job deleted successfully");
@@ -140,12 +157,12 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
         },
       },
     ]);
-  }, [setJobsWithSort]);
+  }, [setJobsWithOrder]);
 
   const handleAddComment = useCallback(
     async (jobId: string, content: string): Promise<JobComment> => {
       const newComment = await addJobComment(jobId, { content });
-      setJobsWithSort((prevJobs) =>
+      setJobsWithOrder((prevJobs) =>
         prevJobs.map((job) =>
           job.id === jobId
             ? {
@@ -158,7 +175,7 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
       );
       return newComment;
     },
-    [setJobsWithSort]
+    [setJobsWithOrder]
   );
 
   const handleUpdateComment = useCallback(
@@ -168,7 +185,7 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
       content: string
     ): Promise<JobComment> => {
       const updatedComment = await updateJobComment(commentId, { content });
-      setJobsWithSort((prevJobs) =>
+      setJobsWithOrder((prevJobs) =>
         prevJobs.map((job) =>
           job.id === jobId
             ? {
@@ -185,14 +202,14 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
       );
       return updatedComment;
     },
-    [setJobsWithSort]
+    [setJobsWithOrder]
   );
 
   const handleDeleteComment = useCallback(
     async (jobId: string, commentId: string): Promise<void> => {
       await deleteJobComment(commentId);
       const deletionTime = new Date().toISOString();
-      setJobsWithSort((prevJobs) =>
+      setJobsWithOrder((prevJobs) =>
         prevJobs.map((job) =>
           job.id === jobId
             ? {
@@ -204,7 +221,99 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
         )
       );
     },
-    [setJobsWithSort]
+    [setJobsWithOrder]
+  );
+
+  const handleReorderJobs = useCallback(
+    async (reorderedList: Job[]): Promise<void> => {
+      if (!Array.isArray(reorderedList) || reorderedList.length === 0) {
+        return;
+      }
+
+      let previousJobsSnapshot: Job[] = jobs;
+      let nextJobsSnapshot: Job[] = jobs;
+      let didChange = false;
+
+      setJobs((currentJobs) => {
+        previousJobsSnapshot = currentJobs.map((job) => ({ ...job }));
+
+        let updatedJobs: Job[];
+        if (activeFilter === "all") {
+          const unchanged =
+            reorderedList.length === currentJobs.length &&
+            reorderedList.every(
+              (job, index) => job.id === currentJobs[index]?.id
+            );
+
+          if (unchanged) {
+            nextJobsSnapshot = currentJobs;
+            didChange = false;
+            return currentJobs;
+          }
+
+          updatedJobs = [...reorderedList];
+        } else {
+          const filteredCurrent = currentJobs.filter(
+            (job) => job.status === activeFilter
+          );
+
+          const unchanged =
+            filteredCurrent.length === reorderedList.length &&
+            reorderedList.every(
+              (job, index) => job.id === filteredCurrent[index]?.id
+            );
+
+          if (unchanged) {
+            nextJobsSnapshot = currentJobs;
+            didChange = false;
+            return currentJobs;
+          }
+
+          const filteredQueue = [...reorderedList];
+          let filteredIndex = 0;
+          updatedJobs = currentJobs.map((job) => {
+            if (job.status === activeFilter) {
+              const nextJob =
+                filteredQueue[filteredIndex] !== undefined
+                  ? filteredQueue[filteredIndex]
+                  : job;
+              filteredIndex += 1;
+              return nextJob;
+            }
+            return job;
+          });
+        }
+
+        didChange = true;
+
+        const withSequentialOrder = updatedJobs.map((job, index) => ({
+          ...job,
+          sort_order: index,
+        }));
+
+        nextJobsSnapshot = withSequentialOrder;
+        return withSequentialOrder;
+      });
+
+      if (!didChange) {
+        return;
+      }
+
+      try {
+        await reorderJobs({
+          orders: nextJobsSnapshot.map((job) => ({
+            id: job.id,
+            sort_order: job.sort_order,
+          })),
+        });
+      } catch (error) {
+        console.error("[useJobs] Failed to reorder jobs", error);
+        Alert.alert("Error", "Failed to save job order");
+        setJobs(sortJobsByOrder([...previousJobsSnapshot]));
+        throw error;
+      }
+    },
+    [activeFilter, jobs]
   );
 
   const getFilteredJobs = useCallback((): Job[] => {
@@ -233,6 +342,7 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
     handleAddComment,
     handleUpdateComment,
     handleDeleteComment,
+    handleReorderJobs,
     getFilteredJobs,
     getJobCountByStatus,
   };

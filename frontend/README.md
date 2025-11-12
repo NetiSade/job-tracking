@@ -25,7 +25,8 @@ npm start
 
 ## Features
 
-- Add, edit, and delete job applications with company, position, status, and priority
+- Add, edit, and delete job applications with company, position, status, and salary expectations
+- Drag and drop jobs to set their order; saved in Supabase for consistent sorting
 - Track a timeline of comments for each job with timestamps
 - Edit existing comments or add new progress updates
 - View last updated date on every job card
@@ -38,5 +39,5 @@ npm start
 - React Native with TypeScript
 - Expo
 - Axios for API calls
-- Custom modal-based pickers (no external dependencies)
+- react-native-draggable-flatlist, react-native-gesture-handler, react-native-reanimated
 - Full type safety with TypeScript interfaces and reusable hooks

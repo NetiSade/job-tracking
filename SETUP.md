@@ -17,8 +17,8 @@ CREATE TABLE jobs (
   company TEXT NOT NULL,
   position TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('wishlist', 'in_progress', 'archived')),
-  priority TEXT NOT NULL CHECK (priority IN ('low', 'medium', 'high')),
-  comments TEXT,
+  sort_order INTEGER NOT NULL,
+  salary_expectations TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -122,7 +122,7 @@ Once everything is running:
 
 1. Add your first job application in the app
 2. Try editing and deleting jobs
-3. Test different status and priority combinations
+3. Drag jobs up and down to set your preferred order
 4. Add comments to track your progress
 
 Enjoy tracking your job applications! 🎉

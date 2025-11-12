@@ -26,11 +26,11 @@ job-tracking-app/
 
 ## Features
 
-- **Job Management**: Create, edit, and delete applications with company, position, status, and priority
+- **Job Management**: Create, edit, and delete applications with company, position, status, and salary expectations
+- **Persistent Ordering**: Drag and drop jobs to reorder them; the sort is saved server-side and survives app restarts
 - **Progress Timeline**: Maintain a chronological list of comments for each job (add & edit comments)
 - **Timestamp Visibility**: Display the last updated date on every job card and the exact time for each comment
 - **Status Filtering**: Quickly filter jobs by `Wishlist`, `In Progress`, `Archived`, or view `All`
-- **Priority Badges**: Color-coded priorities (`Low`, `Medium`, `High`) for quick scanning
 - **Modern UI**: Floating action button, modal forms, and clean typography
 - **Pull to Refresh**: Manually refresh the job list to sync with the backend
 
@@ -106,6 +106,7 @@ npm start
 - `GET /api/jobs/:id` — Get a single job
 - `POST /api/jobs` — Create a new job
 - `PUT /api/jobs/:id` — Update job details
+- `PUT /api/jobs/reorder` — Persist the order of a user's job list
 - `DELETE /api/jobs/:id` — Delete a job
 
 ### Comments

@@ -1,12 +1,7 @@
+import "react-native-gesture-handler";
 import React, { useState, useCallback, useMemo } from "react";
-import {
-  StyleSheet,
-  View,
-  ScrollView,
-  SafeAreaView,
-  StatusBar,
-  RefreshControl,
-} from "react-native";
+import { StyleSheet, View, SafeAreaView, StatusBar, Alert } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AppHeader from "./components/AppHeader";
 import FilterTabs from "./components/FilterTabs";
 import FloatingActionButton from "./components/FloatingActionButton";
@@ -15,11 +10,18 @@ import JobCommentsModal from "./components/JobCommentsModal";
 import JobList from "./components/JobList";
 import LoadingScreen from "./components/LoadingScreen";
 import ErrorScreen from "./components/ErrorScreen";
+import { ToastProvider, useToast } from "./components/ToastProvider";
 import { useAuth } from "./hooks/useAuth";
 import { useJobs } from "./hooks/useJobs";
-import { Job, CreateJobInput, UpdateJobInput } from "./types";
+import { Job, CreateJobInput, UpdateJobInput, JobStatus } from "./types";
 
-export default function App(): JSX.Element {
+const STATUS_LABELS: Record<JobStatus, string> = {
+  wishlist: "Wishlist",
+  in_progress: "In Progress",
+  archived: "Archived",
+};
+
+const AppContent: React.FC = () => {
   const { isAuthenticating, isAuthenticated } = useAuth();
   const {
     jobs,
@@ -35,13 +37,15 @@ export default function App(): JSX.Element {
     handleDeleteComment,
     getFilteredJobs,
     getJobCountByStatus,
+    handleReorderJobs,
   } = useJobs(isAuthenticated);
+  const { showToast } = useToast();
 
   const [isJobFormVisible, setIsJobFormVisible] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
-  const [visibleCommentsJobId, setVisibleCommentsJobId] = useState<string | null>(
-    null
-  );
+  const [visibleCommentsJobId, setVisibleCommentsJobId] = useState<
+    string | null
+  >(null);
   const [isCommentsModalVisible, setIsCommentsModalVisible] = useState(false);
 
   const commentJob = useMemo(
@@ -77,6 +81,51 @@ export default function App(): JSX.Element {
       handleCloseJobForm();
     },
     [editingJob, handleUpdateJob, handleCreateJob, handleCloseJobForm]
+  );
+
+  const handleChangeJobStatus = useCallback(
+    (job: Job, status: JobStatus) => {
+      if (status === job.status) {
+        return;
+      }
+
+      const applyStatusChange = async (): Promise<void> => {
+        try {
+          await handleUpdateJob(job.id, { status }, { successMessage: false });
+          showToast(`Moved to ${STATUS_LABELS[status]}`, { type: "success" });
+        } catch (error) {
+          console.error("Failed to update status", error);
+        }
+      };
+
+      if (job.status === "wishlist" && status === "in_progress") {
+        Alert.alert(
+          "Time to take action!",
+          `Ready to start working on "${job.position}" at ${job.company}?`,
+          [
+            { text: "Not yet", style: "cancel" },
+            {
+              text: "Let's do it",
+              onPress: applyStatusChange,
+            },
+          ]
+        );
+        return;
+      }
+
+      Alert.alert(
+        "Change Status",
+        `Move "${job.position}" at ${job.company} to ${STATUS_LABELS[status]}?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Change",
+            onPress: applyStatusChange,
+          },
+        ]
+      );
+    },
+    [handleUpdateJob]
   );
 
   const handleViewComments = useCallback((job: Job): void => {
@@ -121,21 +170,22 @@ export default function App(): JSX.Element {
         totalJobs={jobs.length}
       />
 
-      <ScrollView
-        style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={loadJobs} />
-        }
-      >
+      <View style={styles.content}>
         <View style={styles.listSection}>
           <JobList
             jobs={getFilteredJobs()}
             onEdit={handleEditJob}
             onDelete={handleDeleteJob}
             onViewComments={handleViewComments}
+            onChangeStatus={handleChangeJobStatus}
+            onReorder={handleReorderJobs}
+            refreshing={loading}
+            onRefresh={() => {
+              void loadJobs();
+            }}
           />
         </View>
-      </ScrollView>
+      </View>
 
       <FloatingActionButton onPress={handleOpenAddModal} />
 
@@ -156,6 +206,16 @@ export default function App(): JSX.Element {
       />
     </SafeAreaView>
   );
+};
+
+export default function App(): JSX.Element {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
+    </GestureHandlerRootView>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -167,6 +227,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listSection: {
+    flex: 1,
     marginTop: 15,
     marginHorizontal: 15,
     marginBottom: 80,

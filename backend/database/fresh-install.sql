@@ -7,14 +7,15 @@ CREATE TABLE jobs (
   company TEXT NOT NULL,
   position TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('wishlist', 'in_progress', 'archived')),
-  priority TEXT NOT NULL CHECK (priority IN ('low', 'medium', 'high')),
-  comments TEXT,
+  sort_order INTEGER NOT NULL,
+  salary_expectations TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create index for faster queries
 CREATE INDEX idx_jobs_user_id ON jobs(user_id);
+CREATE UNIQUE INDEX idx_jobs_user_sort_order ON jobs(user_id, sort_order);
 
 -- Enable Row Level Security
 ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;

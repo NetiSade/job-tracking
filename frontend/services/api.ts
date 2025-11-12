@@ -7,6 +7,7 @@ import {
   JobComment,
   CreateCommentInput,
   UpdateCommentInput,
+  ReorderJobsInput,
 } from '../types';
 import { getSessionToken } from './auth';
 
@@ -71,6 +72,10 @@ export const createJob = async (jobData: CreateJobInput): Promise<Job> => {
 export const updateJob = async (id: string, jobData: UpdateJobInput): Promise<Job> => {
   const response = await api.put<Job>(`/jobs/${id}`, jobData);
   return response.data;
+};
+
+export const reorderJobs = async (payload: ReorderJobsInput): Promise<void> => {
+  await api.put('/jobs/reorder', payload);
 };
 
 export const deleteJob = async (id: string): Promise<{ message: string }> => {

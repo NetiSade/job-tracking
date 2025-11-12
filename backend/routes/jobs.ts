@@ -15,7 +15,8 @@ const transformJob = (job: any) => {
   if (!job) return job;
   const comments = Array.isArray(job.job_comments)
     ? [...job.job_comments].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )
     : [];
 
@@ -30,12 +31,12 @@ const transformJob = (job: any) => {
 router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
     const supabase = getAuthenticatedClient(req);
-    
+
     // First, get jobs
     const { data: jobsData, error: jobsError } = await supabase
       .from("jobs")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("sort_order", { ascending: true });
 
     if (jobsError) {
       console.error("Supabase error fetching jobs:", jobsError);
@@ -88,7 +89,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 router.get("/:id", async (req: Request, res: Response): Promise<void> => {
   try {
     const supabase = getAuthenticatedClient(req);
-    
+
     // Get the job
     const { data: jobData, error: jobError } = await supabase
       .from("jobs")
@@ -140,7 +141,7 @@ router.post(
   ): Promise<void> => {
     try {
       const supabase = getAuthenticatedClient(req);
-      const { company, position, status, priority } = req.body;
+      const { company, position, status, salary_expectations } = req.body;
 
       // Get the authenticated user
       const {
@@ -152,6 +153,32 @@ router.post(
         return;
       }
 
+      const { data: maxOrderData, error: maxOrderError } = await supabase
+        .from("jobs")
+        .select("sort_order")
+        .eq("user_id", user.id)
+        .order("sort_order", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (maxOrderError && maxOrderError.code !== "PGRST116") {
+        console.error("Supabase error fetching sort order:", maxOrderError);
+        throw maxOrderError;
+      }
+
+      const nextSortOrder =
+        typeof maxOrderData?.sort_order === "number"
+          ? maxOrderData.sort_order + 1
+          : 0;
+
+      const requestedSortOrder =
+        typeof req.body.sort_order === "number" ? req.body.sort_order : null;
+
+      const initialSortOrder =
+        requestedSortOrder !== null && requestedSortOrder >= 0
+          ? requestedSortOrder
+          : nextSortOrder;
+
       const { data: jobData, error: jobError } = await supabase
         .from("jobs")
         .insert({
@@ -159,7 +186,9 @@ router.post(
           company,
           position,
           status: status || "wishlist",
-          priority: priority || "medium",
+          sort_order: initialSortOrder,
+          salary_expectations:
+            salary_expectations !== undefined ? salary_expectations : null,
         })
         .select("*")
         .single();
@@ -170,7 +199,7 @@ router.post(
       }
 
       if (!jobData) {
-        throw new Error('Failed to create job');
+        throw new Error("Failed to create job");
       }
 
       // New job has no comments yet
@@ -181,8 +210,128 @@ router.post(
 
       res.status(201).json(createdJob);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unknown error";
+      const message = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ error: message });
+    }
+  }
+);
+
+// Reorder jobs (must be before /:id route)
+router.put(
+  "/reorder",
+  async (
+    req: Request<{}, {}, { orders: { id: string; sort_order: number }[] }>,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const supabase = getAuthenticatedClient(req);
+      const { orders } = req.body || {};
+
+      if (!Array.isArray(orders) || orders.length === 0) {
+        res.status(400).json({ error: "orders must be a non-empty array" });
+        return;
+      }
+
+      const normalizedOrders: { id: string; sort_order: number }[] = [];
+      const seenIds = new Set<string>();
+      for (const entry of orders) {
+        if (
+          !entry ||
+          typeof entry.id !== "string" ||
+          !entry.id ||
+          typeof entry.sort_order !== "number" ||
+          !Number.isFinite(entry.sort_order)
+        ) {
+          continue;
+        }
+        if (seenIds.has(entry.id)) {
+          continue;
+        }
+        normalizedOrders.push({
+          id: entry.id,
+          sort_order: Math.max(0, Math.floor(entry.sort_order)),
+        });
+        seenIds.add(entry.id);
+      }
+
+      if (normalizedOrders.length === 0) {
+        res.status(400).json({ error: "No valid order entries provided" });
+        return;
+      }
+
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+
+      const jobIds = normalizedOrders.map((item) => item.id);
+
+      const { data: existingJobs, error: fetchJobsError } = await supabase
+        .from("jobs")
+        .select("id")
+        .eq("user_id", user.id)
+        .in("id", jobIds);
+
+      if (fetchJobsError) {
+        console.error(
+          "Supabase error validating jobs for reorder:",
+          fetchJobsError
+        );
+        throw fetchJobsError;
+      }
+
+      if (!existingJobs || existingJobs.length !== normalizedOrders.length) {
+        res
+          .status(403)
+          .json({ error: "One or more jobs are invalid or inaccessible" });
+        return;
+      }
+
+      // Two-phase update to avoid unique constraint violations:
+      // 1. First, set all jobs to unique temporary negative values
+      // 2. Then, set them to their final values
+      const tempOffset = -1000000;
+
+      // Phase 1: Set unique temporary values
+      for (let i = 0; i < normalizedOrders.length; i++) {
+        const { id } = normalizedOrders[i];
+        const tempValue = tempOffset - i; // Unique temp value for each job
+        const { error: tempError } = await supabase
+          .from("jobs")
+          .update({ sort_order: tempValue })
+          .eq("id", id);
+
+        if (tempError) {
+          console.error(
+            "Supabase error setting temporary sort order:",
+            tempError
+          );
+          throw tempError;
+        }
+      }
+
+      // Phase 2: Set final values
+      for (const { id, sort_order } of normalizedOrders) {
+        const { error: updateError } = await supabase
+          .from("jobs")
+          .update({ sort_order })
+          .eq("id", id);
+
+        if (updateError) {
+          console.error("Supabase error updating job order:", updateError);
+          throw updateError;
+        }
+      }
+
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Error in PUT /api/jobs/reorder:", error);
+      const message = error instanceof Error ? error.message : "Unknown error";
       res.status(500).json({ error: message });
     }
   }
@@ -197,7 +346,8 @@ router.put(
   ): Promise<void> => {
     try {
       const supabase = getAuthenticatedClient(req);
-      const { company, position, status, priority } = req.body;
+      const { company, position, status, salary_expectations, sort_order } =
+        req.body;
 
       const updateData: Record<string, any> = {
         updated_at: new Date().toISOString(),
@@ -206,7 +356,9 @@ router.put(
       if (company !== undefined) updateData.company = company;
       if (position !== undefined) updateData.position = position;
       if (status !== undefined) updateData.status = status;
-      if (priority !== undefined) updateData.priority = priority;
+      if (salary_expectations !== undefined)
+        updateData.salary_expectations = salary_expectations;
+      if (sort_order !== undefined) updateData.sort_order = sort_order;
 
       const { data: jobData, error: jobError } = await supabase
         .from("jobs")
@@ -221,7 +373,7 @@ router.put(
       }
 
       if (!jobData) {
-        throw new Error('Job not found');
+        throw new Error("Job not found");
       }
 
       // Get comments for this job

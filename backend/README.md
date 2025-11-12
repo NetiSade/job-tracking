@@ -21,7 +21,7 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
    - `database/migration_add_job_comments.sql` if you are upgrading an existing database
 
 These scripts create:
-- `jobs` table (with status/priority columns and RLS policies)
+- `jobs` table (with status, per-user ordering, and RLS policies)
 - `job_comments` table for tracking progress updates per job
 - Trigger to keep `jobs.updated_at` in sync when comments change
 
@@ -49,7 +49,8 @@ This backend is written in TypeScript with:
 - `GET /api/jobs` — Get all jobs (with embedded comments)
 - `GET /api/jobs/:id` — Get a single job (with comments)
 - `POST /api/jobs` — Create a new job
-- `PUT /api/jobs/:id` — Update job details (company, position, status, priority)
+- `PUT /api/jobs/:id` — Update job details (company, position, status, salary expectations)
+- `PUT /api/jobs/reorder` — Persist the user's job ordering
 - `DELETE /api/jobs/:id` — Delete a job and its comments
 
 ### Comments
