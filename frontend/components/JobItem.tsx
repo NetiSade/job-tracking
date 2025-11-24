@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState, memo, useEffect } from "react";
+import * as Haptics from 'expo-haptics';
 import {
   View,
   Text,
@@ -94,6 +95,7 @@ const JobItem: React.FC<JobItemProps> = ({
 
   const handleDragStart = useCallback(() => {
     if (onDrag) {
+      Haptics.selectionAsync();
       onDrag();
     }
   }, [onDrag]);

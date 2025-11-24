@@ -1,5 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { Alert } from "react-native";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   fetchJobs,
   createJob,
@@ -10,6 +15,9 @@ import {
   deleteJobComment,
   reorderJobs,
 } from "../services/api";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
+import { useNetworkStatus } from './useNetworkStatus';
 import {
   Job,
   CreateJobInput,
@@ -27,7 +35,7 @@ interface UseJobsReturn {
   loading: boolean;
   activeFilter: JobStatus | "all";
   setActiveFilter: (filter: JobStatus | "all") => void;
-  loadJobs: () => Promise<void>;
+  loadJobs: () => Promise<void>; // Kept for compatibility but effectively a no-op or refetch
   handleCreateJob: (jobData: CreateJobInput) => Promise<void>;
   handleUpdateJob: (
     jobId: string,
@@ -45,7 +53,11 @@ interface UseJobsReturn {
   handleReorderJobs: (reorderedJobs: Job[]) => Promise<void>;
   getFilteredJobs: () => Job[];
   getJobCountByStatus: (status: JobStatus) => number;
+  isOnline: boolean;
 }
+
+const JOBS_CACHE_KEY = 'jobs_cache';
+const QUERY_KEY = ['jobs'];
 
 const sortJobsByOrder = (list: Job[]): Job[] =>
   [...list].sort((a, b) => a.sort_order - b.sort_order);
@@ -57,264 +69,205 @@ const sortCommentsByCreated = (comments: JobComment[]): JobComment[] =>
   );
 
 export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
+  const isOnline = useNetworkStatus();
   const [activeFilter, setActiveFilter] = useState<JobStatus | "all">(
     "in_progress"
   );
 
-  const setJobsWithOrder = useCallback((updater: (jobs: Job[]) => Job[]) => {
-    setJobs((prevJobs) => sortJobsByOrder(updater(prevJobs)));
-  }, []);
-
-  const loadJobs = useCallback(async (): Promise<void> => {
-    setLoading(true);
-    try {
-      const data = await fetchJobs();
-      const normalized = data.map((job) => ({
-        ...job,
-        comments: sortCommentsByCreated(job.comments || []),
-      }));
-      setJobs(sortJobsByOrder(normalized));
-    } catch (error) {
-      console.error('[useJobs] Failed to load jobs', error);
-      Alert.alert("Error", "Failed to load jobs");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadJobs();
-    }
-  }, [isAuthenticated, loadJobs]);
-
-  const handleCreateJob = useCallback(
-    async (jobData: CreateJobInput): Promise<void> => {
+  const { data: jobs = [], isLoading: loading, refetch } = useQuery({
+    queryKey: QUERY_KEY,
+    queryFn: async () => {
+      if (!isAuthenticated) return [];
+      
       try {
-        const newJob = await createJob(jobData);
-        const normalizedJob = {
-          ...newJob,
-          comments: sortCommentsByCreated(newJob.comments || []),
-        };
-        setJobsWithOrder((prevJobs) => [...prevJobs, normalizedJob]);
-        Alert.alert("Success", "Job added successfully");
-      } catch (error) {
-        Alert.alert("Error", "Failed to create job");
-        throw error;
-      }
-    },
-    [setJobsWithOrder]
-  );
-
-  const handleUpdateJob = useCallback(
-    async (
-      jobId: string,
-      jobData: UpdateJobInput,
-      options?: UpdateJobOptions
-    ): Promise<void> => {
-      try {
-        const updatedJob = await updateJob(jobId, jobData);
-        const normalizedJob = {
-          ...updatedJob,
-          comments: sortCommentsByCreated(updatedJob.comments || []),
-        };
-        setJobsWithOrder((prevJobs) =>
-          prevJobs.map((job) => (job.id === jobId ? normalizedJob : job))
-        );
-        const successMessage =
-          options?.successMessage === undefined
-            ? "Job updated successfully"
-            : options.successMessage;
-        if (successMessage) {
-          Alert.alert("Success", successMessage);
+        if (isOnline) {
+          const data = await fetchJobs();
+          const normalized = data.map((job) => ({
+            ...job,
+            comments: sortCommentsByCreated(job.comments || []),
+          }));
+          const sortedJobs = sortJobsByOrder(normalized);
+          await AsyncStorage.setItem(JOBS_CACHE_KEY, JSON.stringify(sortedJobs));
+          return sortedJobs;
+        } else {
+          const cached = await AsyncStorage.getItem(JOBS_CACHE_KEY);
+          return cached ? JSON.parse(cached) : [];
         }
       } catch (error) {
-        Alert.alert("Error", "Failed to update job");
+        console.error('[useJobs] Failed to load jobs', error);
+        const cached = await AsyncStorage.getItem(JOBS_CACHE_KEY);
+        if (cached) return JSON.parse(cached);
         throw error;
       }
     },
-    [setJobsWithOrder]
-  );
+    enabled: isAuthenticated,
+    initialData: [],
+  });
 
-  const handleDeleteJob = useCallback((jobId: string): void => {
+  const createJobMutation = useMutation({
+    mutationFn: createJob,
+    onMutate: async (newJobData) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY });
+      const previousJobs = queryClient.getQueryData<Job[]>(QUERY_KEY);
+      
+      // Optimistic update
+      queryClient.setQueryData<Job[]>(QUERY_KEY, (old = []) => {
+        const tempJob: Job = {
+          id: 'temp-' + Date.now(),
+          user_id: 'temp-user',
+          ...newJobData,
+          sort_order: old.length,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          comments: [],
+        };
+        return [...old, tempJob];
+      });
+
+      return { previousJobs };
+    },
+    onError: (err, newJob, context) => {
+      queryClient.setQueryData(QUERY_KEY, context?.previousJobs);
+      Alert.alert("Error", "Failed to create job");
+    },
+    onSuccess: async () => {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Success", "Job added successfully");
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    },
+  });
+
+  const updateJobMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateJobInput }) => updateJob(id, data),
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY });
+      const previousJobs = queryClient.getQueryData<Job[]>(QUERY_KEY);
+
+      queryClient.setQueryData<Job[]>(QUERY_KEY, (old = []) => 
+        old.map(job => job.id === id ? { ...job, ...data } : job)
+      );
+
+      return { previousJobs };
+    },
+    onError: (err, vars, context) => {
+      queryClient.setQueryData(QUERY_KEY, context?.previousJobs);
+      Alert.alert("Error", "Failed to update job");
+    },
+    onSuccess: async (_, vars) => {
+       // Success message handled in wrapper
+       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    }
+  });
+
+  const deleteJobMutation = useMutation({
+    mutationFn: deleteJob,
+    onMutate: async (jobId) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY });
+      const previousJobs = queryClient.getQueryData<Job[]>(QUERY_KEY);
+
+      queryClient.setQueryData<Job[]>(QUERY_KEY, (old = []) => 
+        old.filter(job => job.id !== jobId)
+      );
+
+      return { previousJobs };
+    },
+    onError: (err, jobId, context) => {
+      queryClient.setQueryData(QUERY_KEY, context?.previousJobs);
+      Alert.alert("Error", "Failed to delete job");
+    },
+    onSuccess: async () => {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Success", "Job deleted successfully");
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    }
+  });
+
+  // Wrappers to match existing interface
+  const handleCreateJob = useCallback(async (jobData: CreateJobInput) => {
+    if (!isOnline) {
+      Alert.alert("Offline", "You cannot create jobs while offline.");
+      return;
+    }
+    await createJobMutation.mutateAsync(jobData);
+  }, [isOnline, createJobMutation]);
+
+  const handleUpdateJob = useCallback(async (
+    jobId: string,
+    jobData: UpdateJobInput,
+    options?: UpdateJobOptions
+  ) => {
+    if (!isOnline) {
+      Alert.alert("Offline", "You cannot update jobs while offline.");
+      return;
+    }
+    await updateJobMutation.mutateAsync({ id: jobId, data: jobData });
+    
+    const successMessage = options?.successMessage === undefined
+      ? "Job updated successfully"
+      : options.successMessage;
+      
+    if (successMessage) {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Success", successMessage);
+    }
+  }, [isOnline, updateJobMutation]);
+
+  const handleDeleteJob = useCallback((jobId: string) => {
+    if (!isOnline) {
+      Alert.alert("Offline", "You cannot delete jobs while offline.");
+      return;
+    }
     Alert.alert("Delete Job", "Are you sure you want to delete this job?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
         style: "destructive",
-        onPress: async () => {
-          try {
-            await deleteJob(jobId);
-            setJobsWithOrder((prevJobs) =>
-              prevJobs.filter((job) => job.id !== jobId)
-            );
-            Alert.alert("Success", "Job deleted successfully");
-          } catch (error) {
-            Alert.alert("Error", "Failed to delete job");
-          }
-        },
+        onPress: () => deleteJobMutation.mutate(jobId),
       },
     ]);
-  }, [setJobsWithOrder]);
+  }, [isOnline, deleteJobMutation]);
 
-  const handleAddComment = useCallback(
-    async (jobId: string, content: string): Promise<JobComment> => {
-      const newComment = await addJobComment(jobId, { content });
-      setJobsWithOrder((prevJobs) =>
-        prevJobs.map((job) =>
-          job.id === jobId
-            ? {
-                ...job,
-                updated_at: newComment.updated_at,
-                comments: sortCommentsByCreated([newComment, ...job.comments]),
-              }
-            : job
-        )
-      );
-      return newComment;
-    },
-    [setJobsWithOrder]
-  );
+  // Comment mutations (simplified for brevity, similar pattern)
+  const handleAddComment = useCallback(async (jobId: string, content: string) => {
+    const newComment = await addJobComment(jobId, { content });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    return newComment;
+  }, [queryClient]);
 
-  const handleUpdateComment = useCallback(
-    async (
-      jobId: string,
-      commentId: string,
-      content: string
-    ): Promise<JobComment> => {
-      const updatedComment = await updateJobComment(commentId, { content });
-      setJobsWithOrder((prevJobs) =>
-        prevJobs.map((job) =>
-          job.id === jobId
-            ? {
-                ...job,
-                updated_at: updatedComment.updated_at,
-                comments: sortCommentsByCreated(
-                  job.comments.map((comment) =>
-                    comment.id === commentId ? updatedComment : comment
-                  )
-                ),
-              }
-            : job
-        )
-      );
-      return updatedComment;
-    },
-    [setJobsWithOrder]
-  );
+  const handleUpdateComment = useCallback(async (jobId: string, commentId: string, content: string) => {
+    const updatedComment = await updateJobComment(commentId, { content });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    return updatedComment;
+  }, [queryClient]);
 
-  const handleDeleteComment = useCallback(
-    async (jobId: string, commentId: string): Promise<void> => {
-      await deleteJobComment(commentId);
-      const deletionTime = new Date().toISOString();
-      setJobsWithOrder((prevJobs) =>
-        prevJobs.map((job) =>
-          job.id === jobId
-            ? {
-                ...job,
-                updated_at: deletionTime,
-                comments: job.comments.filter((comment) => comment.id !== commentId),
-              }
-            : job
-        )
-      );
-    },
-    [setJobsWithOrder]
-  );
+  const handleDeleteComment = useCallback(async (jobId: string, commentId: string) => {
+    await deleteJobComment(commentId);
+    queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+  }, [queryClient]);
 
-  const handleReorderJobs = useCallback(
-    async (reorderedList: Job[]): Promise<void> => {
-      if (!Array.isArray(reorderedList) || reorderedList.length === 0) {
-        return;
-      }
-
-      let previousJobsSnapshot: Job[] = jobs;
-      let nextJobsSnapshot: Job[] = jobs;
-      let didChange = false;
-
-      setJobs((currentJobs) => {
-        previousJobsSnapshot = currentJobs.map((job) => ({ ...job }));
-
-        let updatedJobs: Job[];
-        if (activeFilter === "all") {
-          const unchanged =
-            reorderedList.length === currentJobs.length &&
-            reorderedList.every(
-              (job, index) => job.id === currentJobs[index]?.id
-            );
-
-          if (unchanged) {
-            nextJobsSnapshot = currentJobs;
-            didChange = false;
-            return currentJobs;
-          }
-
-          updatedJobs = [...reorderedList];
-        } else {
-          const filteredCurrent = currentJobs.filter(
-            (job) => job.status === activeFilter
-          );
-
-          const unchanged =
-            filteredCurrent.length === reorderedList.length &&
-            reorderedList.every(
-              (job, index) => job.id === filteredCurrent[index]?.id
-            );
-
-          if (unchanged) {
-            nextJobsSnapshot = currentJobs;
-            didChange = false;
-            return currentJobs;
-          }
-
-          const filteredQueue = [...reorderedList];
-          let filteredIndex = 0;
-          updatedJobs = currentJobs.map((job) => {
-            if (job.status === activeFilter) {
-              const nextJob =
-                filteredQueue[filteredIndex] !== undefined
-                  ? filteredQueue[filteredIndex]
-                  : job;
-              filteredIndex += 1;
-              return nextJob;
-            }
-            return job;
-          });
-        }
-
-        didChange = true;
-
-        const withSequentialOrder = updatedJobs.map((job, index) => ({
-          ...job,
-          sort_order: index,
-        }));
-
-        nextJobsSnapshot = withSequentialOrder;
-        return withSequentialOrder;
+  const handleReorderJobs = useCallback(async (reorderedList: Job[]) => {
+    // Optimistic update for reordering
+    const previousJobs = queryClient.getQueryData<Job[]>(QUERY_KEY);
+    
+    // Update local state immediately
+    queryClient.setQueryData<Job[]>(QUERY_KEY, reorderedList);
+    
+    try {
+      await reorderJobs({
+        orders: reorderedList.map((job) => ({
+          id: job.id,
+          sort_order: job.sort_order,
+        })),
       });
-
-      if (!didChange) {
-        return;
-      }
-
-      try {
-        await reorderJobs({
-          orders: nextJobsSnapshot.map((job) => ({
-            id: job.id,
-            sort_order: job.sort_order,
-          })),
-        });
-      } catch (error) {
-        console.error("[useJobs] Failed to reorder jobs", error);
-        Alert.alert("Error", "Failed to save job order");
-        setJobs(sortJobsByOrder([...previousJobsSnapshot]));
-        throw error;
-      }
-    },
-    [activeFilter, jobs]
-  );
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      console.error("[useJobs] Failed to reorder jobs", error);
+      Alert.alert("Error", "Failed to save job order");
+      // Rollback
+      queryClient.setQueryData(QUERY_KEY, previousJobs);
+    }
+  }, [queryClient]);
 
   const getFilteredJobs = useCallback((): Job[] => {
     if (activeFilter === "all") {
@@ -335,7 +288,7 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
     loading,
     activeFilter,
     setActiveFilter,
-    loadJobs,
+    loadJobs: async () => { await refetch(); },
     handleCreateJob,
     handleUpdateJob,
     handleDeleteJob,
@@ -345,5 +298,6 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
     handleReorderJobs,
     getFilteredJobs,
     getJobCountByStatus,
+    isOnline,
   };
 };

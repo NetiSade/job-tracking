@@ -208,12 +208,18 @@ const AppContent: React.FC = () => {
   );
 };
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
+
 export default function App(): JSX.Element {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ToastProvider>
-        <AppContent />
-      </ToastProvider>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
+      </QueryClientProvider>
     </GestureHandlerRootView>
   );
 }
