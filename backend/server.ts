@@ -7,7 +7,7 @@ import commentsRouter from './routes/comments';
 
 dotenv.config();
 
-const app: Application = express();
+export const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
@@ -24,7 +24,11 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', message: 'Job Tracking API is running' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
+
+export default app;
 
