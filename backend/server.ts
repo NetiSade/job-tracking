@@ -19,6 +19,11 @@ app.use('/api/auth', authRouter);
 app.use('/api', commentsRouter);
 app.use('/api/jobs', jobsRouter);
 
+// Root route
+app.get('/', (_req: Request, res: Response) => {
+  res.send('Job Tracking API');
+});
+
 // Health check
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', message: 'Job Tracking API is running' });
