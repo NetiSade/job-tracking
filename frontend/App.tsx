@@ -1,6 +1,7 @@
 import "react-native-gesture-handler";
 import React, { useState, useCallback, useMemo } from "react";
-import { StyleSheet, View, SafeAreaView, StatusBar, Alert } from "react-native";
+import { StyleSheet, View, StatusBar, Alert } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AppHeader from "./components/AppHeader";
 import FilterTabs from "./components/FilterTabs";
@@ -212,13 +213,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
 
-export default function App(): JSX.Element {
+export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          <AppContent />
-        </ToastProvider>
+        <SafeAreaProvider>
+          <ToastProvider>
+            <AppContent />
+          </ToastProvider>
+        </SafeAreaProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );
