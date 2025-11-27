@@ -11,6 +11,8 @@ import {
 import { Job, JobStatus } from "../types";
 import { getStatusColor } from "../utils/jobStyles";
 import { formatDateTime } from "../utils/date";
+import { useThemedStyles } from "../hooks/useThemedStyles";
+import { ThemeColors } from "../constants/theme";
 
 const STATUS_OPTIONS: { label: string; value: JobStatus }[] = [
   { label: "Wishlist", value: "wishlist" },
@@ -39,6 +41,7 @@ const JobItem: React.FC<JobItemProps> = ({
   onDrag,
   isDragging,
 }) => {
+  const styles = useThemedStyles(stylesFactory);
   const [commentsExpanded, setCommentsExpanded] = useState(false);
   const [menuButtonLayout, setMenuButtonLayout] = useState<{
     x: number;
@@ -46,6 +49,7 @@ const JobItem: React.FC<JobItemProps> = ({
     width: number;
     height: number;
   } | null>(null);
+  const [isStatusMenuVisible, setIsStatusMenuVisible] = useState(false);
 
   useEffect(() => {
     setCommentsExpanded(false);
@@ -63,12 +67,10 @@ const JobItem: React.FC<JobItemProps> = ({
     onViewComments(job);
   }, [job, onViewComments]);
 
-  const [isStatusMenuVisible, setIsStatusMenuVisible] = useState(false);
-
-  const menuButtonRef = React.useRef<TouchableOpacity>(null);
+  const menuButtonRef = React.useRef<React.ElementRef<typeof TouchableOpacity>>(null);
 
   const handleMenuButtonPress = useCallback(() => {
-    menuButtonRef.current?.measureInWindow((x, y, width, height) => {
+    menuButtonRef.current?.measureInWindow((x: number, y: number, width: number, height: number) => {
       setMenuButtonLayout({ x, y, width, height });
       setIsStatusMenuVisible(true);
     });
@@ -162,9 +164,8 @@ const JobItem: React.FC<JobItemProps> = ({
           <Text style={styles.metaPrimary}>{`Updated ${formatDateTime(
             job.updated_at
           )}`}</Text>
-          <Text style={styles.metaSecondary}>{`${commentCount} comment${
-            commentCount === 1 ? "" : "s"
-          }`}</Text>
+          <Text style={styles.metaSecondary}>{`${commentCount} comment${commentCount === 1 ? "" : "s"
+            }`}</Text>
         </View>
 
         {job.salary_expectations ? (
@@ -277,9 +278,9 @@ const JobItem: React.FC<JobItemProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const stylesFactory = (colors: ThemeColors) => StyleSheet.create({
   container: {
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     shadowColor: "#000",
@@ -317,24 +318,24 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#d6dbe4",
-    backgroundColor: "#f5f7fa",
+    borderColor: colors.border,
+    backgroundColor: colors.background,
   },
   dragHandleText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#7b8898",
     letterSpacing: 1,
+    color: colors.textSecondary,
   },
   company: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
+    color: colors.text,
   },
   position: {
     fontSize: 16,
-    color: "#555",
     marginTop: 4,
+    color: colors.textSecondary,
   },
   badges: {
     flexDirection: "row",
@@ -359,9 +360,9 @@ const styles = StyleSheet.create({
   },
   menuButtonText: {
     fontSize: 20,
-    color: "#516175",
     fontWeight: "600",
     lineHeight: 20,
+    color: colors.textSecondary,
   },
   metaRow: {
     flexDirection: "row",
@@ -371,16 +372,16 @@ const styles = StyleSheet.create({
   metaPrimary: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#4a90e2",
+    color: colors.primary,
   },
   metaSecondary: {
     fontSize: 14,
-    color: "#666",
+    color: colors.textSecondary,
   },
   salaryText: {
     fontSize: 14,
-    color: "#333",
     marginTop: 8,
+    color: colors.text,
   },
   commentsPreview: {
     marginTop: 12,
@@ -392,30 +393,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
-    backgroundColor: "#eef1f6",
+    backgroundColor: colors.background,
   },
   toggleCommentsText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#4a90e2",
+    color: colors.primary,
   },
   commentRow: {
-    backgroundColor: "#f7f9fc",
     borderRadius: 8,
     padding: 10,
     borderWidth: 1,
-    borderColor: "#e0e6f0",
+    backgroundColor: colors.background,
+    borderColor: colors.border,
   },
   commentTimestamp: {
     fontSize: 12,
-    color: "#4a90e2",
     fontWeight: "600",
     marginBottom: 4,
+    color: colors.primary,
   },
   commentText: {
     fontSize: 13,
-    color: "#333",
     lineHeight: 18,
+    color: colors.text,
   },
   actions: {
     flexDirection: "row",
@@ -427,15 +428,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   editButton: {
-    backgroundColor: "#4a90e2",
     marginRight: 4,
+    backgroundColor: colors.primary,
   },
   commentButton: {
     backgroundColor: "#7b61ff",
   },
   deleteButton: {
-    backgroundColor: "#e74c3c",
     marginLeft: 4,
+    backgroundColor: colors.error,
   },
   buttonText: {
     color: "#ffffff",
@@ -452,10 +453,10 @@ const styles = StyleSheet.create({
   menuContainer: {
     position: "absolute",
     alignItems: "flex-start",
+    backgroundColor: colors.card,
   },
   menuContent: {
     width: 200,
-    backgroundColor: "#ffffff",
     borderRadius: 12,
     paddingVertical: 12,
     shadowColor: "#000",
@@ -463,30 +464,30 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 6,
+    backgroundColor: colors.card,
   },
   menuTitle: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#516175",
     paddingHorizontal: 16,
     paddingBottom: 8,
+    color: colors.textSecondary,
   },
   menuItem: {
     paddingVertical: 10,
     paddingHorizontal: 16,
   },
   menuItemActive: {
-    backgroundColor: "#eef1f6",
     borderLeftWidth: 3,
-    borderLeftColor: "#4a90e2",
+    backgroundColor: colors.background,
   },
   menuItemText: {
     fontSize: 14,
-    color: "#333",
+    color: colors.text,
   },
   menuItemTextActive: {
     fontWeight: "600",
-    color: "#4a90e2",
+    color: colors.primary,
   },
 });
 

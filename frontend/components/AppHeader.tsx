@@ -1,5 +1,8 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useTheme } from "../context/ThemeContext";
+import { useThemedStyles } from "../hooks/useThemedStyles";
+import { ThemeColors } from "../constants/theme";
 
 interface AppHeaderProps {
   activeCount: number;
@@ -10,6 +13,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   activeCount,
   wishlistCount,
 }) => {
+  const { toggleTheme, isDark } = useTheme();
+  const styles = useThemedStyles(stylesFactory);
+
   return (
     <View style={styles.container}>
       <View>
@@ -18,13 +24,15 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           {activeCount} active • {wishlistCount} wishlist
         </Text>
       </View>
+      <TouchableOpacity onPress={toggleTheme} style={styles.themeButton}>
+        <Text style={styles.themeButtonText}>{isDark ? "☀️" : "🌙"}</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const stylesFactory = (colors: ThemeColors) => StyleSheet.create({
   container: {
-    backgroundColor: "#4a90e2",
     paddingVertical: 20,
     paddingHorizontal: 20,
     shadowColor: "#000",
@@ -32,17 +40,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: colors.headerBackground,
   },
   title: {
     fontSize: 32,
     fontWeight: "bold",
-    color: "#ffffff",
+    color: colors.headerText,
   },
   subtitle: {
     fontSize: 14,
-    color: "#ffffff",
     opacity: 0.9,
     marginTop: 4,
+    color: colors.headerText,
+  },
+  themeButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+  },
+  themeButtonText: {
+    fontSize: 20,
   },
 });
 

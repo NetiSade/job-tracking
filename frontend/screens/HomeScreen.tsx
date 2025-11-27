@@ -13,6 +13,9 @@ import { useToast } from "../components/ToastProvider";
 import { useAuth } from "../hooks/useAuth";
 import { useJobs } from "../hooks/useJobs";
 import { Job, CreateJobInput, UpdateJobInput, JobStatus } from "../types";
+import { useTheme } from "../context/ThemeContext";
+import { useThemedStyles } from "../hooks/useThemedStyles";
+import { ThemeColors } from "../constants/theme";
 
 const STATUS_LABELS: Record<JobStatus, string> = {
     wishlist: "Wishlist",
@@ -39,6 +42,8 @@ const HomeScreen: React.FC = () => {
         handleReorderJobs,
     } = useJobs(isAuthenticated);
     const { showToast } = useToast();
+    const { isDark } = useTheme();
+    const styles = useThemedStyles(stylesFactory);
 
     const [isJobFormVisible, setIsJobFormVisible] = useState(false);
     const [editingJob, setEditingJob] = useState<Job | null>(null);
@@ -155,7 +160,7 @@ const HomeScreen: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
             <AppHeader
                 activeCount={getJobCountByStatus("in_progress")}
@@ -207,10 +212,10 @@ const HomeScreen: React.FC = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const stylesFactory = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f5f5f5",
+        backgroundColor: colors.background,
     },
     content: {
         flex: 1,

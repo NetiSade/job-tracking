@@ -1,34 +1,31 @@
 import React from "react";
-import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import { View, ActivityIndicator, Text, StyleSheet } from "react-native";
+import { useThemedStyles } from "../hooks/useThemedStyles";
+import { ThemeColors } from "../constants/theme";
 
-interface LoadingScreenProps {
-  message?: string;
-}
+const LoadingScreen: React.FC = () => {
+  const styles = useThemedStyles(stylesFactory);
 
-const LoadingScreen: React.FC<LoadingScreenProps> = ({
-  message = "Initializing...",
-}) => {
   return (
     <View style={styles.container}>
       <ActivityIndicator size="large" color="#4a90e2" />
-      <Text style={styles.text}>{message}</Text>
+      <Text style={styles.text}>Loading...</Text>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const stylesFactory = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor: colors.background,
   },
   text: {
-    marginTop: 16,
+    marginTop: 12,
     fontSize: 16,
-    color: "#666",
+    color: colors.textSecondary,
   },
 });
 
 export default LoadingScreen;
-

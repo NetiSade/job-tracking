@@ -7,6 +7,8 @@ import {
   StyleSheet,
 } from "react-native";
 import { JobStatus } from "../types";
+import { useThemedStyles } from "../hooks/useThemedStyles";
+import { ThemeColors } from "../constants/theme";
 
 interface FilterTabsProps {
   activeFilter: JobStatus | "all";
@@ -21,6 +23,8 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
   getJobCount,
   totalJobs,
 }) => {
+  const styles = useThemedStyles(stylesFactory);
+
   const filters = [
     {
       id: "in_progress" as JobStatus,
@@ -75,12 +79,12 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const stylesFactory = (colors: ThemeColors) => StyleSheet.create({
   container: {
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.card,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
+    borderBottomColor: colors.border,
   },
   scroll: {
     paddingHorizontal: 16,
@@ -90,15 +94,15 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginRight: 8,
     borderRadius: 20,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: colors.background,
   },
   tabActive: {
-    backgroundColor: "#4a90e2",
+    backgroundColor: colors.primary,
   },
   tabText: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#666",
+    color: colors.textSecondary,
   },
   tabTextActive: {
     color: "#ffffff",
@@ -106,4 +110,3 @@ const styles = StyleSheet.create({
 });
 
 export default FilterTabs;
-

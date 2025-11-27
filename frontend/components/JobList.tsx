@@ -5,6 +5,8 @@ import DraggableFlatList, {
 } from "react-native-draggable-flatlist";
 import JobItem from "./JobItem";
 import { Job, JobStatus } from "../types";
+import { useThemedStyles } from "../hooks/useThemedStyles";
+import { ThemeColors } from "../constants/theme";
 
 interface JobListProps {
   jobs: Job[];
@@ -27,6 +29,8 @@ const JobList: React.FC<JobListProps> = ({
   refreshing,
   onRefresh,
 }) => {
+  const styles = useThemedStyles(stylesFactory);
+
   if (jobs.length === 0) {
     return (
       <View style={styles.emptyContainer}>
@@ -53,7 +57,7 @@ const JobList: React.FC<JobListProps> = ({
 
   const ItemSeparator = useCallback(
     () => <View style={styles.separator} />,
-    []
+    [styles.separator]
   );
 
   const handleDragEnd = useCallback(
@@ -86,7 +90,7 @@ const JobList: React.FC<JobListProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const stylesFactory = (colors: ThemeColors) => StyleSheet.create({
   list: {
     flex: 1,
   },
@@ -100,7 +104,7 @@ const styles = StyleSheet.create({
     height: 8,
   },
   emptyContainer: {
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.card,
     padding: 40,
     borderRadius: 12,
     alignItems: "center",
@@ -113,12 +117,12 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#666",
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: "#999",
+    color: colors.textSecondary,
   },
 });
 
