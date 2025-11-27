@@ -33,8 +33,8 @@ interface UpdateJobOptions {
 interface UseJobsReturn {
   jobs: Job[];
   loading: boolean;
-  activeFilter: JobStatus | "all";
-  setActiveFilter: (filter: JobStatus | "all") => void;
+  activeFilter: JobStatus;
+  setActiveFilter: (filter: JobStatus) => void;
   loadJobs: () => Promise<void>; // Kept for compatibility but effectively a no-op or refetch
   handleCreateJob: (jobData: CreateJobInput) => Promise<void>;
   handleUpdateJob: (
@@ -71,7 +71,7 @@ const sortCommentsByCreated = (comments: JobComment[]): JobComment[] =>
 export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
   const queryClient = useQueryClient();
   const isOnline = useNetworkStatus();
-  const [activeFilter, setActiveFilter] = useState<JobStatus | "all">(
+  const [activeFilter, setActiveFilter] = useState<JobStatus>(
     "in_progress"
   );
 
@@ -152,11 +152,13 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
     },
     onError: (err, vars, context) => {
       queryClient.setQueryData(QUERY_KEY, context?.previousJobs);
+      console.error('[useJobs] Failed to update job ' + vars.id, err);
       Alert.alert("Error", "Failed to update job");
     },
     onSuccess: async (_, vars) => {
        // Success message handled in wrapper
        queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+       console.log('[useJobs] Job updated successfully ' + vars.id);
     }
   });
 
@@ -174,6 +176,7 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
     },
     onError: (err, jobId, context) => {
       queryClient.setQueryData(QUERY_KEY, context?.previousJobs);
+      console.error('[useJobs] Failed to delete job ' + jobId, err);
       Alert.alert("Error", "Failed to delete job");
     },
     onSuccess: async () => {
@@ -235,13 +238,13 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
     return newComment;
   }, [queryClient]);
 
-  const handleUpdateComment = useCallback(async (jobId: string, commentId: string, content: string) => {
+  const handleUpdateComment = useCallback(async (_jobId: string, commentId: string, content: string) => {
     const updatedComment = await updateJobComment(commentId, { content });
     queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     return updatedComment;
   }, [queryClient]);
 
-  const handleDeleteComment = useCallback(async (jobId: string, commentId: string) => {
+  const handleDeleteComment = useCallback(async (_jobId: string, commentId: string) => {
     await deleteJobComment(commentId);
     queryClient.invalidateQueries({ queryKey: QUERY_KEY });
   }, [queryClient]);
@@ -270,15 +273,12 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
   }, [queryClient]);
 
   const getFilteredJobs = useCallback((): Job[] => {
-    if (activeFilter === "all") {
-      return jobs;
-    }
-    return jobs.filter((job) => job.status === activeFilter);
+    return jobs.filter((job: Job) => job.status === activeFilter);
   }, [jobs, activeFilter]);
 
   const getJobCountByStatus = useCallback(
     (status: JobStatus): number => {
-      return jobs.filter((job) => job.status === status).length;
+      return jobs.filter((job: Job) => job.status === status).length;
     },
     [jobs]
   );

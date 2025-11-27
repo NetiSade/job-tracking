@@ -5,24 +5,22 @@ import { JobStatus } from "../types";
 import { useTheme } from "../context/ThemeContext";
 
 interface FilterTabsProps {
-  activeFilter: JobStatus | "all";
-  onFilterChange: (filter: JobStatus | "all") => void;
+  activeFilter: JobStatus;
+  onFilterChange: (filter: JobStatus) => void;
   getJobCount: (status: JobStatus) => number;
-  totalJobs: number;
 }
 
 const FilterTabs: React.FC<FilterTabsProps> = ({
   activeFilter,
   onFilterChange,
   getJobCount,
-  totalJobs,
 }) => {
   const { colors } = useTheme();
 
   const buttons = [
     {
       value: "in_progress",
-      label: `In Progress (${getJobCount("in_progress")})`,
+      label: `Active (${getJobCount("in_progress")})`,
     },
     {
       value: "wishlist",
@@ -32,19 +30,14 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
       value: "archived",
       label: `Archived (${getJobCount("archived")})`,
     },
-    {
-      value: "all",
-      label: `All (${totalJobs})`,
-    },
   ];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
       <SegmentedButtons
         value={activeFilter}
-        onValueChange={(value) => onFilterChange(value as JobStatus | "all")}
+        onValueChange={(value) => onFilterChange(value as JobStatus)}
         buttons={buttons}
-        style={styles.segmentedButtons}
       />
     </View>
   );
@@ -55,9 +48,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-  },
-  segmentedButtons: {
-    // SegmentedButtons will use theme colors automatically
   },
 });
 

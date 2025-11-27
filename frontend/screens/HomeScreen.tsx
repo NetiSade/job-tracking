@@ -171,7 +171,6 @@ const HomeScreen: React.FC = () => {
                 activeFilter={activeFilter}
                 onFilterChange={setActiveFilter}
                 getJobCount={getJobCountByStatus}
-                totalJobs={jobs.length}
             />
 
             <View style={styles.content}>
