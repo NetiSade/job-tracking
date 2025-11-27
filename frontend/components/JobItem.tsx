@@ -1,18 +1,11 @@
 import React, { useCallback, useMemo, useState, memo, useEffect } from "react";
 import * as Haptics from 'expo-haptics';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-  TouchableWithoutFeedback,
-} from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { Card, Text, Button, Chip, IconButton, Menu } from "react-native-paper";
 import { Job, JobStatus } from "../types";
 import { getStatusColor } from "../utils/jobStyles";
 import { formatDateTime } from "../utils/date";
-import { useThemedStyles } from "../hooks/useThemedStyles";
-import { ThemeColors } from "../constants/theme";
+import { useTheme } from "../context/ThemeContext";
 
 const STATUS_OPTIONS: { label: string; value: JobStatus }[] = [
   { label: "Wishlist", value: "wishlist" },
@@ -41,14 +34,8 @@ const JobItem: React.FC<JobItemProps> = ({
   onDrag,
   isDragging,
 }) => {
-  const styles = useThemedStyles(stylesFactory);
+  const { colors } = useTheme();
   const [commentsExpanded, setCommentsExpanded] = useState(false);
-  const [menuButtonLayout, setMenuButtonLayout] = useState<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null>(null);
   const [isStatusMenuVisible, setIsStatusMenuVisible] = useState(false);
 
   useEffect(() => {
@@ -67,28 +54,15 @@ const JobItem: React.FC<JobItemProps> = ({
     onViewComments(job);
   }, [job, onViewComments]);
 
-  const menuButtonRef = React.useRef<React.ElementRef<typeof TouchableOpacity>>(null);
-
-  const handleMenuButtonPress = useCallback(() => {
-    menuButtonRef.current?.measureInWindow((x: number, y: number, width: number, height: number) => {
-      setMenuButtonLayout({ x, y, width, height });
-      setIsStatusMenuVisible(true);
-    });
-  }, []);
-
-  const closeStatusMenu = useCallback(() => {
-    setIsStatusMenuVisible(false);
-  }, []);
-
   const handleStatusSelect = useCallback(
     (status: JobStatus) => {
-      closeStatusMenu();
+      setIsStatusMenuVisible(false);
       if (status === job.status) {
         return;
       }
       onChangeStatus(job, status);
     },
-    [closeStatusMenu, job, onChangeStatus]
+    [job, onChangeStatus]
   );
 
   const handleToggleComments = useCallback(() => {
@@ -112,6 +86,7 @@ const JobItem: React.FC<JobItemProps> = ({
       ? comments
       : comments.slice(0, PREVIEW_COMMENT_COUNT);
   }, [job.comments, commentsExpanded]);
+
   const toggleLabel = useMemo(() => {
     if (commentsExpanded) {
       return "Show fewer comments";
@@ -123,179 +98,131 @@ const JobItem: React.FC<JobItemProps> = ({
   }, [commentsExpanded, commentCount]);
 
   return (
-    <View style={[styles.container, isDragging && styles.dragging]}>
-      <View style={styles.content}>
+    <Card style={[styles.card, isDragging && styles.dragging]} mode="elevated">
+      <Card.Content>
         <View style={styles.header}>
-          <TouchableOpacity
-            ref={menuButtonRef}
-            style={styles.menuButton}
-            onPress={handleMenuButtonPress}
+          <Menu
+            visible={isStatusMenuVisible}
+            onDismiss={() => setIsStatusMenuVisible(false)}
+            anchor={
+              <IconButton
+                icon="dots-vertical"
+                size={20}
+                onPress={() => setIsStatusMenuVisible(true)}
+              />
+            }
           >
-            <Text style={styles.menuButtonText}>⋮</Text>
-          </TouchableOpacity>
+            <Menu.Item
+              title="Change Status"
+              disabled
+              titleStyle={{ fontWeight: 'bold' }}
+            />
+            {STATUS_OPTIONS.map((option) => (
+              <Menu.Item
+                key={option.value}
+                onPress={() => handleStatusSelect(option.value)}
+                title={option.label}
+                leadingIcon={job.status === option.value ? "check" : undefined}
+              />
+            ))}
+          </Menu>
+
           <View style={styles.headerTextContainer}>
-            <Text style={styles.company}>{job.company}</Text>
-            <Text style={styles.position}>{job.position}</Text>
+            <Text variant="titleLarge" style={{ color: colors.text }}>
+              {job.company}
+            </Text>
+            <Text variant="bodyMedium" style={{ color: colors.textSecondary }}>
+              {job.position}
+            </Text>
           </View>
+
           <View style={styles.headerRight}>
-            <View style={styles.badges}>
-              <View
-                style={[
-                  styles.badge,
-                  { backgroundColor: getStatusColor(job.status) },
-                ]}
-              >
-                <Text style={styles.badgeText}>{formatStatus(job.status)}</Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              style={styles.dragHandle}
-              onLongPress={handleDragStart}
-              delayLongPress={120}
-              disabled={!onDrag}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            <Chip
+              mode="flat"
+              style={{ backgroundColor: getStatusColor(job.status) }}
+              textStyle={{ color: "#ffffff" }}
             >
-              <Text style={styles.dragHandleText}>:::</Text>
-            </TouchableOpacity>
+              {formatStatus(job.status)}
+            </Chip>
+            {onDrag && (
+              <TouchableOpacity
+                onLongPress={handleDragStart}
+                delayLongPress={120}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <IconButton icon="drag-horizontal-variant" size={20} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
         <View style={styles.metaRow}>
-          <Text style={styles.metaPrimary}>{`Updated ${formatDateTime(
-            job.updated_at
-          )}`}</Text>
-          <Text style={styles.metaSecondary}>{`${commentCount} comment${commentCount === 1 ? "" : "s"
-            }`}</Text>
+          <Text variant="bodySmall" style={{ color: colors.primary }}>
+            Updated {formatDateTime(job.updated_at)}
+          </Text>
+          <Text variant="bodySmall" style={{ color: colors.textSecondary }}>
+            {commentCount} comment{commentCount === 1 ? "" : "s"}
+          </Text>
         </View>
 
-        {job.salary_expectations ? (
-          <Text style={styles.salaryText}>
-            {`Salary expectations: ${job.salary_expectations}`}
+        {job.salary_expectations && (
+          <Text variant="bodyMedium" style={{ marginTop: 8, color: colors.text }}>
+            Salary expectations: {job.salary_expectations}
           </Text>
-        ) : null}
+        )}
 
         {displayedComments.length > 0 && (
           <View style={styles.commentsPreview}>
             {displayedComments.map((comment) => (
-              <View key={comment.id} style={styles.commentRow}>
-                <Text style={styles.commentTimestamp}>
-                  {formatDateTime(comment.updated_at)}
-                </Text>
-                <Text
-                  style={styles.commentText}
-                  numberOfLines={commentsExpanded ? undefined : 2}
-                >
-                  {comment.content}
-                </Text>
-              </View>
+              <Card key={comment.id} mode="outlined" style={{ marginBottom: 8 }}>
+                <Card.Content>
+                  <Text variant="labelSmall" style={{ color: colors.primary, marginBottom: 4 }}>
+                    {formatDateTime(comment.updated_at)}
+                  </Text>
+                  <Text
+                    variant="bodySmall"
+                    style={{ color: colors.text }}
+                    numberOfLines={commentsExpanded ? undefined : 2}
+                  >
+                    {comment.content}
+                  </Text>
+                </Card.Content>
+              </Card>
             ))}
             {commentCount > 0 && (
-              <TouchableOpacity
-                style={styles.toggleCommentsButton}
-                onPress={handleToggleComments}
-              >
-                <Text style={styles.toggleCommentsText}>{toggleLabel}</Text>
-              </TouchableOpacity>
+              <Button mode="text" onPress={handleToggleComments}>
+                {toggleLabel}
+              </Button>
             )}
           </View>
         )}
-      </View>
+      </Card.Content>
 
-      <Modal
-        visible={isStatusMenuVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={closeStatusMenu}
-      >
-        <View style={styles.menuOverlay}>
-          <TouchableWithoutFeedback onPress={closeStatusMenu}>
-            <View style={styles.menuBackdrop} />
-          </TouchableWithoutFeedback>
-          {menuButtonLayout && (
-            <View
-              style={[
-                styles.menuContainer,
-                {
-                  top: menuButtonLayout.y + menuButtonLayout.height + 4,
-                  left: menuButtonLayout.x,
-                },
-              ]}
-            >
-              <View style={styles.menuContent}>
-                <Text style={styles.menuTitle}>Change Status</Text>
-                {STATUS_OPTIONS.map((option) => {
-                  const isActive = option.value === job.status;
-                  return (
-                    <TouchableOpacity
-                      key={option.value}
-                      style={[
-                        styles.menuItem,
-                        isActive && [
-                          styles.menuItemActive,
-                          { borderLeftColor: getStatusColor(option.value) },
-                        ],
-                      ]}
-                      onPress={() => handleStatusSelect(option.value)}
-                    >
-                      <Text
-                        style={[
-                          styles.menuItemText,
-                          isActive && styles.menuItemTextActive,
-                        ]}
-                      >
-                        {option.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-          )}
-        </View>
-      </Modal>
-
-      <View style={styles.actions}>
-        <TouchableOpacity
-          style={[styles.button, styles.editButton]}
-          onPress={handleEditPress}
-        >
-          <Text style={styles.buttonText}>Edit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.button, styles.commentButton]}
-          onPress={handleCommentsPress}
-        >
-          <Text style={styles.buttonText}>Comments</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.button, styles.deleteButton]}
+      <Card.Actions>
+        <Button mode="contained" onPress={handleEditPress}>
+          Edit
+        </Button>
+        <Button mode="contained-tonal" onPress={handleCommentsPress}>
+          Comments
+        </Button>
+        <Button
+          mode="contained"
+          buttonColor={colors.error}
           onPress={handleDeletePress}
         >
-          <Text style={styles.buttonText}>Delete</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+          Delete
+        </Button>
+      </Card.Actions>
+    </Card>
   );
 };
 
-const stylesFactory = (colors: ThemeColors) => StyleSheet.create({
-  container: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+const styles = StyleSheet.create({
+  card: {
+    marginBottom: 12,
   },
   dragging: {
     opacity: 0.9,
-    shadowOpacity: 0.2,
-    transform: [{ scale: 0.98 }],
-  },
-  content: {
-    marginBottom: 12,
   },
   header: {
     flexDirection: "row",
@@ -306,188 +233,20 @@ const stylesFactory = (colors: ThemeColors) => StyleSheet.create({
   headerTextContainer: {
     flex: 1,
     marginRight: 12,
-    marginLeft: 8,
   },
   headerRight: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
-  dragHandle: {
-    paddingHorizontal: 6,
-    paddingVertical: 6,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  dragHandleText: {
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-    color: colors.textSecondary,
-  },
-  company: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: colors.text,
-  },
-  position: {
-    fontSize: 16,
-    marginTop: 4,
-    color: colors.textSecondary,
-  },
-  badges: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginLeft: 6,
-  },
-  badgeText: {
-    color: "#ffffff",
-    fontSize: 10,
-    fontWeight: "600",
-  },
-  menuButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  menuButtonText: {
-    fontSize: 20,
-    fontWeight: "600",
-    lineHeight: 20,
-    color: colors.textSecondary,
-  },
   metaRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-  },
-  metaPrimary: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.primary,
-  },
-  metaSecondary: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  salaryText: {
-    fontSize: 14,
     marginTop: 8,
-    color: colors.text,
   },
   commentsPreview: {
     marginTop: 12,
-    gap: 8,
-  },
-  toggleCommentsButton: {
-    marginTop: 4,
-    alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: colors.background,
-  },
-  toggleCommentsText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.primary,
-  },
-  commentRow: {
-    borderRadius: 8,
-    padding: 10,
-    borderWidth: 1,
-    backgroundColor: colors.background,
-    borderColor: colors.border,
-  },
-  commentTimestamp: {
-    fontSize: 12,
-    fontWeight: "600",
-    marginBottom: 4,
-    color: colors.primary,
-  },
-  commentText: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: colors.text,
-  },
-  actions: {
-    flexDirection: "row",
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 6,
-    alignItems: "center",
-  },
-  editButton: {
-    marginRight: 4,
-    backgroundColor: colors.primary,
-  },
-  commentButton: {
-    backgroundColor: "#7b61ff",
-  },
-  deleteButton: {
-    marginLeft: 4,
-    backgroundColor: colors.error,
-  },
-  buttonText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  menuOverlay: {
-    flex: 1,
-  },
-  menuBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
-  },
-  menuContainer: {
-    position: "absolute",
-    alignItems: "flex-start",
-    backgroundColor: colors.card,
-  },
-  menuContent: {
-    width: 200,
-    borderRadius: 12,
-    paddingVertical: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 6,
-    backgroundColor: colors.card,
-  },
-  menuTitle: {
-    fontSize: 13,
-    fontWeight: "600",
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    color: colors.textSecondary,
-  },
-  menuItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  menuItemActive: {
-    borderLeftWidth: 3,
-    backgroundColor: colors.background,
-  },
-  menuItemText: {
-    fontSize: 14,
-    color: colors.text,
-  },
-  menuItemTextActive: {
-    fontWeight: "600",
-    color: colors.primary,
   },
 });
 

@@ -1,14 +1,8 @@
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-} from "react-native";
+import { View, StyleSheet } from "react-native";
+import { SegmentedButtons } from "react-native-paper";
 import { JobStatus } from "../types";
-import { useThemedStyles } from "../hooks/useThemedStyles";
-import { ThemeColors } from "../constants/theme";
+import { useTheme } from "../context/ThemeContext";
 
 interface FilterTabsProps {
   activeFilter: JobStatus | "all";
@@ -23,89 +17,47 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
   getJobCount,
   totalJobs,
 }) => {
-  const styles = useThemedStyles(stylesFactory);
+  const { colors } = useTheme();
 
-  const filters = [
+  const buttons = [
     {
-      id: "in_progress" as JobStatus,
-      label: "In Progress",
-      count: getJobCount("in_progress"),
+      value: "in_progress",
+      label: `In Progress (${getJobCount("in_progress")})`,
     },
     {
-      id: "wishlist" as JobStatus,
-      label: "Wishlist",
-      count: getJobCount("wishlist"),
+      value: "wishlist",
+      label: `Wishlist (${getJobCount("wishlist")})`,
     },
     {
-      id: "archived" as JobStatus,
-      label: "Archived",
-      count: getJobCount("archived"),
+      value: "archived",
+      label: `Archived (${getJobCount("archived")})`,
     },
-    { id: "all" as const, label: "All", count: totalJobs },
+    {
+      value: "all",
+      label: `All (${totalJobs})`,
+    },
   ];
 
-  const handlePress = (filterId: JobStatus | "all") => {
-    onFilterChange(filterId);
-  };
-
   return (
-    <View style={styles.container}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.scroll}
-      >
-        {filters.map((filter) => (
-          <TouchableOpacity
-            key={filter.id}
-            style={[
-              styles.tab,
-              activeFilter === filter.id && styles.tabActive,
-            ]}
-            onPress={() => handlePress(filter.id)}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeFilter === filter.id && styles.tabTextActive,
-              ]}
-            >
-              {filter.label} ({filter.count})
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+    <View style={[styles.container, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <SegmentedButtons
+        value={activeFilter}
+        onValueChange={(value) => onFilterChange(value as JobStatus | "all")}
+        buttons={buttons}
+        style={styles.segmentedButtons}
+      />
     </View>
   );
 };
 
-const stylesFactory = (colors: ThemeColors) => StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.card,
     paddingVertical: 12,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
-  scroll: {
-    paddingHorizontal: 16,
-  },
-  tab: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
-    borderRadius: 20,
-    backgroundColor: colors.background,
-  },
-  tabActive: {
-    backgroundColor: colors.primary,
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: colors.textSecondary,
-  },
-  tabTextActive: {
-    color: "#ffffff",
+  segmentedButtons: {
+    // SegmentedButtons will use theme colors automatically
   },
 });
 

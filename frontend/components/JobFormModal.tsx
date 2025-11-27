@@ -1,18 +1,10 @@
 import React, { useCallback } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { Portal, Dialog, Button, TextInput, Text } from "react-native-paper";
 import { Job, CreateJobInput, UpdateJobInput, JobStatus } from "../types";
 import { useJobForm } from "../hooks/useJobForm";
 import PickerModal from "./PickerModal";
+import { useTheme } from "../context/ThemeContext";
 
 interface JobFormModalProps {
   visible: boolean;
@@ -27,6 +19,7 @@ const JobFormModal: React.FC<JobFormModalProps> = ({
   onSubmit,
   initialValues,
 }) => {
+  const { colors } = useTheme();
   const {
     company,
     position,
@@ -46,7 +39,6 @@ const JobFormModal: React.FC<JobFormModalProps> = ({
 
   const isEditing = !!initialValues;
   const title = isEditing ? "Edit Job" : "Add New Job";
-  const submitLabel = isSubmitting ? "Saving..." : "Save";
 
   const handleSubmit = useCallback(async (): Promise<void> => {
     if (!company.trim() || !position.trim()) {
@@ -92,89 +84,66 @@ const JobFormModal: React.FC<JobFormModalProps> = ({
   const getStatusLabel = (value: string): string =>
     statusOptions.find((opt) => opt.value === value)?.label || value;
 
-  const openStatusPicker = useCallback((): void => {
-    setShowStatusPicker(true);
-  }, [setShowStatusPicker]);
-
-  const closeStatusPicker = useCallback((): void => {
-    setShowStatusPicker(false);
-  }, [setShowStatusPicker]);
-
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={handleClose}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleClose}>
-            <Text style={styles.cancelButton}>Cancel</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{title}</Text>
-          <TouchableOpacity onPress={handleSubmit} disabled={isSubmitting}>
-            <Text
-              style={[
-                styles.saveButton,
-                isSubmitting && styles.saveButtonDisabled,
-              ]}
-            >
-              {submitLabel}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Company *</Text>
+    <Portal>
+      <Dialog visible={visible} onDismiss={handleClose} style={styles.dialog}>
+        <Dialog.Title>{title}</Dialog.Title>
+        <Dialog.ScrollArea style={styles.scrollArea}>
+          <ScrollView contentContainerStyle={styles.content}>
             <TextInput
-              style={styles.input}
+              label="Company *"
               value={company}
               onChangeText={setCompany}
               placeholder="e.g., Google"
-              placeholderTextColor="#999"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Position *</Text>
-            <TextInput
+              mode="outlined"
               style={styles.input}
+            />
+
+            <TextInput
+              label="Position *"
               value={position}
               onChangeText={setPosition}
               placeholder="e.g., Software Engineer"
-              placeholderTextColor="#999"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Status</Text>
-            <TouchableOpacity
-              style={styles.pickerButton}
-              onPress={openStatusPicker}
-            >
-              <Text style={styles.pickerButtonText}>
-                {getStatusLabel(status)}
-              </Text>
-              <Text style={styles.pickerButtonArrow}>▼</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Salary Expectations</Text>
-            <TextInput
+              mode="outlined"
               style={styles.input}
+            />
+
+            <View style={styles.inputGroup}>
+              <Text variant="labelLarge" style={{ marginBottom: 8, color: colors.text }}>
+                Status
+              </Text>
+              <Button
+                mode="outlined"
+                onPress={() => setShowStatusPicker(true)}
+                icon="chevron-down"
+                contentStyle={{ justifyContent: "space-between" }}
+                style={styles.pickerButton}
+              >
+                {getStatusLabel(status)}
+              </Button>
+            </View>
+
+            <TextInput
+              label="Salary Expectations"
               value={salaryExpectations}
               onChangeText={setSalaryExpectations}
               placeholder="e.g., $120k base"
-              placeholderTextColor="#999"
+              mode="outlined"
+              style={styles.input}
             />
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </Dialog.ScrollArea>
+        <Dialog.Actions>
+          <Button onPress={handleClose}>Cancel</Button>
+          <Button
+            mode="contained"
+            onPress={handleSubmit}
+            disabled={isSubmitting}
+            loading={isSubmitting}
+          >
+            Save
+          </Button>
+        </Dialog.Actions>
 
         <PickerModal
           visible={showStatusPicker}
@@ -182,83 +151,32 @@ const JobFormModal: React.FC<JobFormModalProps> = ({
           options={statusOptions}
           selectedValue={status}
           onSelect={(value) => setStatus(value as JobStatus)}
-          onClose={closeStatusPicker}
+          onClose={() => setShowStatusPicker(false)}
         />
-      </KeyboardAvoidingView>
-    </Modal>
+      </Dialog>
+    </Portal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
+  dialog: {
+    maxHeight: '80%',
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: "#ffffff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  cancelButton: {
-    fontSize: 16,
-    color: "#666",
-  },
-  saveButton: {
-    fontSize: 16,
-    color: "#4a90e2",
-    fontWeight: "600",
-  },
-  saveButtonDisabled: {
-    color: "#999",
+  scrollArea: {
+    paddingHorizontal: 0,
   },
   content: {
-    flex: 1,
-    padding: 20,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
+    paddingHorizontal: 24,
+    paddingTop: 8,
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    padding: 14,
-    fontSize: 16,
-    backgroundColor: "#ffffff",
+    marginBottom: 16,
+  },
+  inputGroup: {
+    marginBottom: 16,
   },
   pickerButton: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    padding: 14,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
-  },
-  pickerButtonText: {
-    fontSize: 16,
-    color: "#333",
-  },
-  pickerButtonArrow: {
-    fontSize: 12,
-    color: "#666",
+    justifyContent: "flex-start",
   },
 });
 

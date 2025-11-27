@@ -1,7 +1,6 @@
 import React from "react";
-import { TouchableOpacity, Text, StyleSheet } from "react-native";
-import { useThemedStyles } from "../hooks/useThemedStyles";
-import { ThemeColors } from "../constants/theme";
+import { FAB } from "react-native-paper";
+import { useTheme } from "../context/ThemeContext";
 
 interface FloatingActionButtonProps {
   onPress: () => void;
@@ -10,37 +9,22 @@ interface FloatingActionButtonProps {
 const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   onPress,
 }) => {
-  const styles = useThemedStyles(stylesFactory);
+  const { colors } = useTheme();
 
   return (
-    <TouchableOpacity style={styles.fab} onPress={onPress}>
-      <Text style={styles.fabText}>+</Text>
-    </TouchableOpacity>
+    <FAB
+      icon="plus"
+      color="white"
+      style={{
+        position: 'absolute',
+        margin: 16,
+        right: 0,
+        bottom: 0,
+        backgroundColor: colors.primary,
+      }}
+      onPress={onPress}
+    />
   );
 };
-
-const stylesFactory = (colors: ThemeColors) => StyleSheet.create({
-  fab: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  fabText: {
-    fontSize: 24,
-    color: "#ffffff",
-    fontWeight: "bold",
-  },
-});
 
 export default FloatingActionButton;
