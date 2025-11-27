@@ -1,11 +1,12 @@
-import React, { useCallback, useMemo, useState, memo, useEffect } from "react";
-import * as Haptics from 'expo-haptics';
+import React, { useCallback, useState, memo } from "react";
+import * as Haptics from "expo-haptics";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Card, Text, Button, Chip, IconButton, Menu } from "react-native-paper";
 import { Job, JobStatus } from "../types";
 import { getStatusColor } from "../utils/jobStyles";
 import { formatDateTime } from "../utils/date";
 import { useTheme } from "../context/ThemeContext";
+import CommentsSection from "./CommentsSection";
 
 const STATUS_OPTIONS: { label: string; value: JobStatus }[] = [
   { label: "Wishlist", value: "wishlist" },
@@ -23,8 +24,6 @@ interface JobItemProps {
   isDragging?: boolean;
 }
 
-const PREVIEW_COMMENT_COUNT = 3;
-
 const JobItem: React.FC<JobItemProps> = ({
   job,
   onEdit,
@@ -35,12 +34,10 @@ const JobItem: React.FC<JobItemProps> = ({
   isDragging,
 }) => {
   const { colors } = useTheme();
-  const [commentsExpanded, setCommentsExpanded] = useState(false);
   const [isStatusMenuVisible, setIsStatusMenuVisible] = useState(false);
 
-  useEffect(() => {
-    setCommentsExpanded(false);
-  }, [job.id]);
+  const comments = job.comments ?? [];
+  const commentCount = comments.length;
 
   const handleEditPress = useCallback(() => {
     onEdit(job);
@@ -57,17 +54,12 @@ const JobItem: React.FC<JobItemProps> = ({
   const handleStatusSelect = useCallback(
     (status: JobStatus) => {
       setIsStatusMenuVisible(false);
-      if (status === job.status) {
-        return;
+      if (status !== job.status) {
+        onChangeStatus(job, status);
       }
-      onChangeStatus(job, status);
     },
     [job, onChangeStatus]
   );
-
-  const handleToggleComments = useCallback(() => {
-    setCommentsExpanded((prev) => !prev);
-  }, []);
 
   const handleDragStart = useCallback(() => {
     if (onDrag) {
@@ -79,27 +71,10 @@ const JobItem: React.FC<JobItemProps> = ({
   const formatStatus = (status: JobStatus): string =>
     status.replace("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
-  const commentCount = job.comments?.length ?? 0;
-  const displayedComments = useMemo(() => {
-    const comments = job.comments || [];
-    return commentsExpanded
-      ? comments
-      : comments.slice(0, PREVIEW_COMMENT_COUNT);
-  }, [job.comments, commentsExpanded]);
-
-  const toggleLabel = useMemo(() => {
-    if (commentsExpanded) {
-      return "Show fewer comments";
-    }
-    if (commentCount > PREVIEW_COMMENT_COUNT) {
-      return `View all ${commentCount} comments`;
-    }
-    return "Expand comments";
-  }, [commentsExpanded, commentCount]);
-
   return (
     <Card style={[styles.card, isDragging && styles.dragging]} mode="elevated">
       <Card.Content>
+        {/* HEADER */}
         <View style={styles.header}>
           <Menu
             visible={isStatusMenuVisible}
@@ -115,7 +90,7 @@ const JobItem: React.FC<JobItemProps> = ({
             <Menu.Item
               title="Change Status"
               disabled
-              titleStyle={{ fontWeight: 'bold' }}
+              titleStyle={{ fontWeight: "bold" }}
             />
             {STATUS_OPTIONS.map((option) => (
               <Menu.Item
@@ -144,6 +119,7 @@ const JobItem: React.FC<JobItemProps> = ({
             >
               {formatStatus(job.status)}
             </Chip>
+
             {onDrag && (
               <TouchableOpacity
                 onLongPress={handleDragStart}
@@ -156,6 +132,7 @@ const JobItem: React.FC<JobItemProps> = ({
           </View>
         </View>
 
+        {/* META */}
         <View style={styles.metaRow}>
           <Text variant="bodySmall" style={{ color: colors.primary }}>
             Updated {formatDateTime(job.updated_at)}
@@ -165,39 +142,21 @@ const JobItem: React.FC<JobItemProps> = ({
           </Text>
         </View>
 
+        {/* SALARY */}
         {job.salary_expectations && (
-          <Text variant="bodyMedium" style={{ marginTop: 8, color: colors.text }}>
+          <Text
+            variant="bodyMedium"
+            style={{ marginTop: 8, color: colors.text }}
+          >
             Salary expectations: {job.salary_expectations}
           </Text>
         )}
 
-        {displayedComments.length > 0 && (
-          <View style={styles.commentsPreview}>
-            {displayedComments.map((comment) => (
-              <Card key={comment.id} mode="outlined" style={{ marginBottom: 8 }}>
-                <Card.Content>
-                  <Text variant="labelSmall" style={{ color: colors.primary, marginBottom: 4 }}>
-                    {formatDateTime(comment.updated_at)}
-                  </Text>
-                  <Text
-                    variant="bodySmall"
-                    style={{ color: colors.text }}
-                    numberOfLines={commentsExpanded ? undefined : 2}
-                  >
-                    {comment.content}
-                  </Text>
-                </Card.Content>
-              </Card>
-            ))}
-            {commentCount > 0 && (
-              <Button mode="text" onPress={handleToggleComments}>
-                {toggleLabel}
-              </Button>
-            )}
-          </View>
-        )}
+        {/* COMMENTS */}
+        <CommentsSection comments={comments} />
       </Card.Content>
 
+      {/* FOOTER ACTIONS */}
       <Card.Actions>
         <Button mode="contained" onPress={handleEditPress}>
           Edit
@@ -244,9 +203,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: 8,
-  },
-  commentsPreview: {
-    marginTop: 12,
   },
 });
 
