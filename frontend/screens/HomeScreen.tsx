@@ -162,10 +162,7 @@ const HomeScreen: React.FC = () => {
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
-            <AppHeader
-                activeCount={getJobCountByStatus("in_progress")}
-                wishlistCount={getJobCountByStatus("wishlist")}
-            />
+            <AppHeader />
 
             <FilterTabs
                 activeFilter={activeFilter}
