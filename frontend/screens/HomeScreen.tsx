@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from "react";
-import { StyleSheet, View, StatusBar, Alert } from "react-native";
+import { StyleSheet, View, Alert, StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AppHeader from "../components/AppHeader";
 import FilterTabs from "../components/FilterTabs";
@@ -13,9 +13,9 @@ import { useToast } from "../components/ToastProvider";
 import { useAuth } from "../hooks/useAuth";
 import { useJobs } from "../hooks/useJobs";
 import { Job, CreateJobInput, UpdateJobInput, JobStatus } from "../types";
-import { useTheme } from "../context/ThemeContext";
 import { useThemedStyles } from "../hooks/useThemedStyles";
 import { ThemeColors } from "../constants/theme";
+import { useTheme } from "react-native-paper";
 
 const STATUS_LABELS: Record<JobStatus, string> = {
     wishlist: "Wishlist",
@@ -42,8 +42,8 @@ const HomeScreen: React.FC = () => {
         handleReorderJobs,
     } = useJobs(isAuthenticated);
     const { showToast } = useToast();
-    const { isDark } = useTheme();
     const styles = useThemedStyles(stylesFactory);
+    const isDark = useTheme();
 
     const [isJobFormVisible, setIsJobFormVisible] = useState(false);
     const [editingJob, setEditingJob] = useState<Job | null>(null);
@@ -159,18 +159,16 @@ const HomeScreen: React.FC = () => {
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <>
             <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
-
             <AppHeader />
-
             <FilterTabs
                 activeFilter={activeFilter}
                 onFilterChange={setActiveFilter}
                 getJobCount={getJobCountByStatus}
             />
+            <View style={styles.container}>
 
-            <View style={styles.content}>
                 <View style={styles.listSection}>
                     <JobList
                         jobs={getFilteredJobs()}
@@ -204,7 +202,7 @@ const HomeScreen: React.FC = () => {
                 onUpdateComment={handleUpdateComment}
                 onDeleteComment={handleDeleteComment}
             />
-        </SafeAreaView>
+        </>
     );
 };
 
@@ -213,13 +211,10 @@ const stylesFactory = (colors: ThemeColors) => StyleSheet.create({
         flex: 1,
         backgroundColor: colors.background,
     },
-    content: {
-        flex: 1,
-    },
     listSection: {
         flex: 1,
-        marginTop: 16,
-        marginHorizontal: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 16,
     },
 });
 

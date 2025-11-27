@@ -37,7 +37,7 @@ export const lightColors: ThemeColors = {
   tabIconDefault: "#B2A697",
   tabIconSelected: "#C27149",
 
-  headerBackground: "#C27149",  // caramel top note
+  headerBackground: "#c67750ff",  // caramel top note
   headerText: "#FFFFFF",
 };
 
