@@ -218,9 +218,8 @@ const stylesFactory = (colors: ThemeColors) => StyleSheet.create({
     },
     listSection: {
         flex: 1,
-        marginTop: 15,
-        marginHorizontal: 15,
-        marginBottom: 80,
+        marginTop: 16,
+        marginHorizontal: 16,
     },
 });
 

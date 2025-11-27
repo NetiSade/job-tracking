@@ -18,39 +18,54 @@ export interface ThemeColors {
 }
 
 export const lightColors: ThemeColors = {
-  background: "#f5f5f5",
-  card: "#ffffff",
-  text: "#333333",
-  textSecondary: "#666666",
-  primary: "#4a90e2",
-  border: "#e0e6f0",
-  error: "#e74c3c",
-  success: "#2ecc71",
-  wishlist: "#f1c40f",
-  inProgress: "#3498db",
-  archived: "#95a5a6",
-  tint: "#2f95dc",
-  tabIconDefault: "#ccc",
-  tabIconSelected: "#2f95dc",
-  headerBackground: "#4a90e2",
-  headerText: "#ffffff",
+  background: "#F8F3E7",        // steamed-milk beige
+  card: "#FFFFFF",
+  text: "#352A22",              // roasted coffee bean
+  textSecondary: "#7A6A5A",     // mocha foam
+
+  primary: "#C27149",           // ✨ burnt caramel syrup
+  border: "#E6D9C9",
+
+  error: "#D9534F",             // cherry roasted beans
+  success: "#5CAB7D",           // matcha-mint finish
+
+  wishlist: "#D9A441",          // honey gold
+  inProgress: "#C27149",        // warm ristretto highlight
+  archived: "#A99C92",          // soft oat-grey cappuccino
+
+  tint: "#C27149",
+  tabIconDefault: "#B2A697",
+  tabIconSelected: "#C27149",
+
+  headerBackground: "#C27149",  // caramel top note
+  headerText: "#FFFFFF",
 };
 
+
+
+
 export const darkColors: ThemeColors = {
-  background: "#121212",
-  card: "#1e1e1e",
-  text: "#ffffff",
-  textSecondary: "#aaaaaa",
-  primary: "#4a90e2",
-  border: "#333333",
-  error: "#cf6679",
-  success: "#2ecc71",
-  wishlist: "#f1c40f",
-  inProgress: "#3498db",
-  archived: "#7f8c8d",
-  tint: "#2f95dc",
-  tabIconDefault: "#ccc",
-  tabIconSelected: "#2f95dc",
-  headerBackground: "#1f1f1f",
-  headerText: "#ffffff",
+  background: "#1B110D",         // dark roast base
+  card: "#241712",               // chocolate-oak espresso bar
+
+  text: "#E8DCCF",               // oat milk cream
+  textSecondary: "#BFAE9F",      // warm latte foam
+
+  primary: "#D4895E",            // 🍂 caramel-hazelnut glow
+  border: "#3A2A23",
+
+  error: "#E56A5A",              // chili-roast red
+  success: "#6DC58A",            // mint-leaf aftertaste
+
+  wishlist: "#E1B059",           // golden crema
+  inProgress: "#D4895E",
+  archived: "#8A766A",           // faded mocha
+
+  tint: "#D4895E",
+  tabIconDefault: "#7A6A5E",
+  tabIconSelected: "#D4895E",
+
+  headerBackground: "#2D1C14",   // warm mahogany
+  headerText: "#E8DCCF",
 };
+

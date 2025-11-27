@@ -1,14 +1,15 @@
+import { ThemeColors } from "../constants/theme";
 import { JobStatus } from "../types";
 
-export const getStatusColor = (status: JobStatus): string => {
+export const getStatusColor = (status: JobStatus, colors: ThemeColors): string => {
   switch (status) {
     case "wishlist":
-      return "#9b59b6";
+      return colors.wishlist;
     case "in_progress":
-      return "#3498db";
+      return colors.inProgress;
     case "archived":
-      return "#95a5a6";
+      return colors.archived;
     default:
-      return "#7f8c8d";
+      return colors.archived; // fallback
   }
 };

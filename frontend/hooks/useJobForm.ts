@@ -28,7 +28,7 @@ export const useJobForm = (initialValues?: Job | null): UseJobFormReturn => {
 
   const statusOptions: PickerOption[] = [
     { label: "Wishlist", value: "wishlist" },
-    { label: "In Progress", value: "in_progress" },
+    { label: "Active", value: "in_progress" },
     { label: "Archived", value: "archived" },
   ];
 

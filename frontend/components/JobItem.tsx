@@ -1,7 +1,7 @@
 import React, { useCallback, useState, memo } from "react";
 import * as Haptics from "expo-haptics";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
-import { Card, Text, Button, Chip, IconButton, Menu } from "react-native-paper";
+import { Card, Text, Button, Chip, IconButton, Menu, Divider } from "react-native-paper";
 import { Job, JobStatus } from "../types";
 import { getStatusColor } from "../utils/jobStyles";
 import { formatDateTime } from "../utils/date";
@@ -10,7 +10,7 @@ import CommentsSection from "./CommentsSection";
 
 const STATUS_OPTIONS: { label: string; value: JobStatus }[] = [
   { label: "Wishlist", value: "wishlist" },
-  { label: "In Progress", value: "in_progress" },
+  { label: "Active", value: "in_progress" },
   { label: "Archived", value: "archived" },
 ];
 
@@ -92,6 +92,7 @@ const JobItem: React.FC<JobItemProps> = ({
               disabled
               titleStyle={{ fontWeight: "bold" }}
             />
+
             {STATUS_OPTIONS.map((option) => (
               <Menu.Item
                 key={option.value}
@@ -100,7 +101,17 @@ const JobItem: React.FC<JobItemProps> = ({
                 leadingIcon={job.status === option.value ? "check" : undefined}
               />
             ))}
+
+            <Divider />
+
+            <Menu.Item
+              title="Delete"
+              leadingIcon="trash-can"
+              onPress={() => onDelete(job.id)}
+              titleStyle={{ color: "red" }}
+            />
           </Menu>
+
 
           <View style={styles.headerTextContainer}>
             <Text variant="titleLarge" style={{ color: colors.text }}>
@@ -114,7 +125,7 @@ const JobItem: React.FC<JobItemProps> = ({
           <View style={styles.headerRight}>
             <Chip
               mode="flat"
-              style={{ backgroundColor: getStatusColor(job.status) }}
+              style={{ backgroundColor: getStatusColor(job.status, colors) }}
               textStyle={{ color: "#ffffff" }}
             >
               {formatStatus(job.status)}
@@ -156,20 +167,15 @@ const JobItem: React.FC<JobItemProps> = ({
         <CommentsSection comments={comments} />
       </Card.Content>
 
+      <Divider style={styles.divider} />
+
       {/* FOOTER ACTIONS */}
-      <Card.Actions>
-        <Button mode="contained" onPress={handleEditPress}>
+      <Card.Actions style={styles.actionsFooter}>
+        <Button mode="text" onPress={handleEditPress} icon="pencil">
           Edit
         </Button>
-        <Button mode="contained-tonal" onPress={handleCommentsPress}>
+        <Button mode="text" onPress={handleCommentsPress} icon="comment-outline">
           Comments
-        </Button>
-        <Button
-          mode="contained"
-          buttonColor={colors.error}
-          onPress={handleDeletePress}
-        >
-          Delete
         </Button>
       </Card.Actions>
     </Card>
@@ -203,6 +209,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: 8,
+  },
+  divider: {
+    marginVertical: 8,
+  },
+  actionsFooter: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    paddingTop: 0,
+    paddingBottom: 8,
+    paddingHorizontal: 0,
   },
 });
 
