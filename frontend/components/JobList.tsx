@@ -31,15 +31,6 @@ const JobList: React.FC<JobListProps> = ({
 }) => {
   const styles = useThemedStyles(stylesFactory);
 
-  if (jobs.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No job applications yet</Text>
-        <Text style={styles.emptySubtext}>Add your first job!</Text>
-      </View>
-    );
-  }
-
   const renderItem = useCallback(
     ({ item, drag, isActive }: RenderItemParams<Job>) => (
       <JobItem
@@ -71,6 +62,16 @@ const JobList: React.FC<JobListProps> = ({
     },
     [onReorder]
   );
+
+  // Now we can conditionally return
+  if (jobs.length === 0) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>No job applications yet</Text>
+        <Text style={styles.emptySubtext}>Add your first job!</Text>
+      </View>
+    );
+  }
 
   return (
     <DraggableFlatList
