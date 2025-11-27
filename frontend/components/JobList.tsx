@@ -39,11 +39,11 @@ const JobList: React.FC<JobListProps> = ({
         onDelete={onDelete}
         onViewComments={onViewComments}
         onChangeStatus={onChangeStatus}
-        onDrag={drag}
+        onDrag={jobs.length > 1 ? drag : undefined}
         isDragging={isActive}
       />
     ),
-    [onEdit, onDelete, onViewComments, onChangeStatus]
+    [onEdit, onDelete, onViewComments, onChangeStatus, jobs.length]
   );
 
   const ItemSeparator = useCallback(
