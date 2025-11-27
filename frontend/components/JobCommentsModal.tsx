@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { View, StyleSheet, ScrollView } from "react-native";
 import { Portal, Dialog, Button, TextInput, Text, Card, IconButton } from "react-native-paper";
-import { Job } from "../types";
+import { Job, JobComment } from "../types";
 import { formatDateTime } from "../utils/date";
 import { useTheme } from "../context/ThemeContext";
 
@@ -9,7 +9,8 @@ interface JobCommentsModalProps {
   visible: boolean;
   onClose: () => void;
   job: Job | null;
-  onAddComment: (jobId: string, content: string) => Promise<void>;
+  onAddComment: (jobId: string, content: string) => Promise<JobComment>;
+  onUpdateComment: (jobId: string, commentId: string, content: string) => Promise<JobComment>;
   onDeleteComment: (jobId: string, commentId: string) => Promise<void>;
 }
 
