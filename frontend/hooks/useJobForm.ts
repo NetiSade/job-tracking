@@ -29,7 +29,7 @@ export const useJobForm = (initialValues?: Job | null): UseJobFormReturn => {
   const statusOptions: PickerOption[] = [
     { label: "🌟 Exploring", value: "wishlist" },
     { label: "🚀 Taking Action", value: "in_progress" },
-    { label: "✅ Completed", value: "archived" },
+    { label: "📂 Archived", value: "archived" },
   ];
 
   const resetForm = useCallback((): void => {

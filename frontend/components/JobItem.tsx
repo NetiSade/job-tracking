@@ -11,7 +11,7 @@ import CommentsSection from "./CommentsSection";
 const STATUS_OPTIONS: { label: string; value: JobStatus }[] = [
   { label: "🌟 Exploring", value: "wishlist" },
   { label: "🚀 Taking Action", value: "in_progress" },
-  { label: "✅ Completed", value: "archived" },
+  { label: "📂 Archived", value: "archived" },
 ];
 
 interface JobItemProps {

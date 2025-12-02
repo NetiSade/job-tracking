@@ -28,7 +28,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
     },
     {
       value: "archived",
-      label: `✅ Completed (${getJobCount("archived")})`,
+      label: `📂 Archived (${getJobCount("archived")})`,
     },
   ];
 

@@ -20,7 +20,7 @@ import { useTheme } from "react-native-paper";
 const STATUS_LABELS: Record<JobStatus, string> = {
     wishlist: "🌟 Exploring",
     in_progress: "🚀 Taking Action",
-    archived: "✅ Completed",
+    archived: "📂 Archived",
 };
 
 const HomeScreen: React.FC = () => {
