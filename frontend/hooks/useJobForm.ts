@@ -27,9 +27,9 @@ export const useJobForm = (initialValues?: Job | null): UseJobFormReturn => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const statusOptions: PickerOption[] = [
-    { label: "Wishlist", value: "wishlist" },
-    { label: "Active", value: "in_progress" },
-    { label: "Archived", value: "archived" },
+    { label: "🌟 Exploring", value: "wishlist" },
+    { label: "🚀 Taking Action", value: "in_progress" },
+    { label: "✅ Completed", value: "archived" },
   ];
 
   const resetForm = useCallback((): void => {

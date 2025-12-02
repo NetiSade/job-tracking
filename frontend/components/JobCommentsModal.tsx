@@ -19,27 +19,44 @@ const JobCommentsModal: React.FC<JobCommentsModalProps> = ({
   onClose,
   job,
   onAddComment,
+  onUpdateComment,
   onDeleteComment,
 }) => {
   const { colors } = useTheme();
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
 
-  const handleAddComment = useCallback(async () => {
+  const handleSubmitComment = useCallback(async () => {
     if (!job || !newComment.trim()) {
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await onAddComment(job.id, newComment.trim());
+      if (editingCommentId) {
+        await onUpdateComment(job.id, editingCommentId, newComment.trim());
+        setEditingCommentId(null);
+      } else {
+        await onAddComment(job.id, newComment.trim());
+      }
       setNewComment("");
     } catch (error) {
-      console.error("Error adding comment:", error);
+      console.error("Error submitting comment:", error);
     } finally {
       setIsSubmitting(false);
     }
-  }, [job, newComment, onAddComment]);
+  }, [job, newComment, editingCommentId, onAddComment, onUpdateComment]);
+
+  const handleEditComment = useCallback((comment: JobComment) => {
+    setEditingCommentId(comment.id);
+    setNewComment(comment.content);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingCommentId(null);
+    setNewComment("");
+  }, []);
 
   const handleDeleteComment = useCallback(
     async (commentId: string) => {
@@ -90,11 +107,18 @@ const JobCommentsModal: React.FC<JobCommentsModalProps> = ({
                         <Text variant="labelSmall" style={{ color: colors.primary }}>
                           {formatDateTime(comment.updated_at)}
                         </Text>
-                        <IconButton
-                          icon="delete"
-                          size={16}
-                          onPress={() => handleDeleteComment(comment.id)}
-                        />
+                        <View style={styles.commentActions}>
+                          <IconButton
+                            icon="pencil"
+                            size={16}
+                            onPress={() => handleEditComment(comment)}
+                          />
+                          <IconButton
+                            icon="delete"
+                            size={16}
+                            onPress={() => handleDeleteComment(comment.id)}
+                          />
+                        </View>
                       </View>
                       <Text variant="bodyMedium" style={{ color: colors.text }}>
                         {comment.content}
@@ -120,13 +144,16 @@ const JobCommentsModal: React.FC<JobCommentsModalProps> = ({
 
           <Dialog.Actions>
             <Button onPress={onClose}>Close</Button>
+            {editingCommentId && (
+              <Button onPress={handleCancelEdit}>Cancel Edit</Button>
+            )}
             <Button
               mode="contained"
-              onPress={handleAddComment}
+              onPress={handleSubmitComment}
               disabled={!newComment.trim() || isSubmitting}
               loading={isSubmitting}
             >
-              Add Comment
+              {editingCommentId ? "Update Comment" : "Add Comment"}
             </Button>
           </Dialog.Actions>
         </Dialog>
@@ -157,6 +184,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 8,
+  },
+  commentActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: -8,
   },
   inputContainer: {
     paddingHorizontal: 24,

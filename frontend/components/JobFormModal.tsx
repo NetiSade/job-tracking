@@ -38,11 +38,11 @@ const JobFormModal: React.FC<JobFormModalProps> = ({
   } = useJobForm(initialValues);
 
   const isEditing = !!initialValues;
-  const title = isEditing ? "Edit Job" : "Add New Job";
+  const title = isEditing ? "Update Opportunity" : "New Opportunity";
 
   const handleSubmit = useCallback(async (): Promise<void> => {
     if (!company.trim() || !position.trim()) {
-      alert("Please fill in company and position");
+      alert("Let's add the company and role details!");
       return;
     }
 
@@ -128,7 +128,7 @@ const JobFormModal: React.FC<JobFormModalProps> = ({
               </View>
 
               <TextInput
-                label="Salary Expectations"
+                label="Target Compensation"
                 value={salaryExpectations}
                 onChangeText={setSalaryExpectations}
                 placeholder="e.g., $120k base"

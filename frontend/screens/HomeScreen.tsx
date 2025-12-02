@@ -18,9 +18,9 @@ import { ThemeColors } from "../constants/theme";
 import { useTheme } from "react-native-paper";
 
 const STATUS_LABELS: Record<JobStatus, string> = {
-    wishlist: "Wishlist",
-    in_progress: "In Progress",
-    archived: "Archived",
+    wishlist: "🌟 Exploring",
+    in_progress: "🚀 Taking Action",
+    archived: "✅ Completed",
 };
 
 const HomeScreen: React.FC = () => {
@@ -105,12 +105,12 @@ const HomeScreen: React.FC = () => {
 
             if (job.status === "wishlist" && status === "in_progress") {
                 Alert.alert(
-                    "Time to take action!",
-                    `Ready to start working on "${job.position}" at ${job.company}?`,
+                    "Ready to take action? 🚀",
+                    `Let's start working on "${job.position}" at ${job.company}!`,
                     [
                         { text: "Not yet", style: "cancel" },
                         {
-                            text: "Let's do it",
+                            text: "Let's do it!",
                             onPress: applyStatusChange,
                         },
                     ]
@@ -119,12 +119,12 @@ const HomeScreen: React.FC = () => {
             }
 
             Alert.alert(
-                "Change Status",
-                `Move "${job.position}" at ${job.company} to ${STATUS_LABELS[status]}?`,
+                "Update Journey Stage",
+                `Ready to move "${job.position}" at ${job.company} to ${STATUS_LABELS[status]}?`,
                 [
                     { text: "Cancel", style: "cancel" },
                     {
-                        text: "Change",
+                        text: "Update",
                         onPress: applyStatusChange,
                     },
                 ]

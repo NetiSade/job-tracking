@@ -20,15 +20,15 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
   const buttons = [
     {
       value: "in_progress",
-      label: `Active (${getJobCount("in_progress")})`,
+      label: `🚀 Taking Action (${getJobCount("in_progress")})`,
     },
     {
       value: "wishlist",
-      label: `Wishlist (${getJobCount("wishlist")})`,
+      label: `🌟 Exploring (${getJobCount("wishlist")})`,
     },
     {
       value: "archived",
-      label: `Archived (${getJobCount("archived")})`,
+      label: `✅ Completed (${getJobCount("archived")})`,
     },
   ];
 

@@ -12,7 +12,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSettingsPress }) => {
   return (
     <Appbar.Header style={{ backgroundColor: colors.headerBackground }} >
       <Appbar.Content
-        title="My Job Tracker 🚀"
+        title="My Career Journey 🚀"
         titleStyle={{ color: colors.headerText }}
       />
       <Appbar.Action
