@@ -137,7 +137,7 @@ const JobFormModal: React.FC<JobFormModalProps> = ({
               />
             </ScrollView>
           </Dialog.ScrollArea>
-          <Dialog.Actions>
+          <Dialog.Actions style={styles.actions}>
             <Button onPress={handleClose}>Cancel</Button>
             <Button
               mode="contained"
@@ -185,6 +185,10 @@ const styles = StyleSheet.create({
   },
   pickerButton: {
     justifyContent: "flex-start",
+  },
+  actions: {
+    justifyContent: "space-around",
+    alignItems: "center",
   },
 });
 

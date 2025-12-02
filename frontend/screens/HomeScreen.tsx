@@ -161,24 +161,24 @@ const HomeScreen: React.FC = () => {
                 title: "Taking Action",
                 focusedIcon: "rocket",
                 unfocusedIcon: "rocket-outline",
-                badge: getJobCountByStatus("in_progress"),
+                // badge: getJobCountByStatus("in_progress"),
             },
             {
                 key: "wishlist",
                 title: "Exploring",
                 focusedIcon: "star",
                 unfocusedIcon: "star-outline",
-                badge: getJobCountByStatus("wishlist"),
+                // badge: getJobCountByStatus("wishlist"),
             },
             {
                 key: "archived",
                 title: "Archived",
                 focusedIcon: "folder",
                 unfocusedIcon: "folder-outline",
-                badge: getJobCountByStatus("archived"),
+                // badge: getJobCountByStatus("archived"),
             },
         ],
-        [getJobCountByStatus]
+        []
     );
 
     // Sync bottom nav index with active filter
