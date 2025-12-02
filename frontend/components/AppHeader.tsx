@@ -3,13 +3,11 @@ import { Appbar } from "react-native-paper";
 import { useTheme } from "../context/ThemeContext";
 
 interface AppHeaderProps {
-
+  onSettingsPress: () => void;
 }
 
-const AppHeader: React.FC<AppHeaderProps> = ({
-
-}) => {
-  const { toggleTheme, isDark, colors } = useTheme();
+const AppHeader: React.FC<AppHeaderProps> = ({ onSettingsPress }) => {
+  const { colors } = useTheme();
 
   return (
     <Appbar.Header style={{ backgroundColor: colors.headerBackground }} >
@@ -18,8 +16,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         titleStyle={{ color: colors.headerText }}
       />
       <Appbar.Action
-        icon={isDark ? "white-balance-sunny" : "moon-waning-crescent"}
-        onPress={toggleTheme}
+        icon="cog"
+        onPress={onSettingsPress}
         color={colors.headerText}
       />
     </Appbar.Header>

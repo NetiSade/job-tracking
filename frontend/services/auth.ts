@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { API_URL } from "../config";
+import { Logger } from "./logger";
 
 const TOKEN_KEY = "auth_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
@@ -46,7 +47,7 @@ const refreshToken = async (): Promise<string | null> => {
     );
 
     if (response.data?.token) {
-      console.log("✅ Token refreshed successfully");
+      Logger.info("✅ Token refreshed successfully");
       await AsyncStorage.setItem(TOKEN_KEY, response.data.token);
       if (response.data.refresh_token) {
         await AsyncStorage.setItem(REFRESH_TOKEN_KEY, response.data.refresh_token);
@@ -59,7 +60,7 @@ const refreshToken = async (): Promise<string | null> => {
 
     return null;
   } catch (error: any) {
-    console.error("❌ Error refreshing token:", error);
+    Logger.error("❌ Error refreshing token:", error);
     await signOut();
     return null;
   }
@@ -77,7 +78,7 @@ export const signInWithGoogle = async (): Promise<string | null> => {
 
     const idToken = response.data.idToken;
 
-    console.log("🔐 Authenticating with backend...");
+    Logger.info("🔐 Authenticating with backend...");
     const authResponse = await axios.post(
       `${API_URL}/auth/google`,
       { id_token: idToken },
@@ -85,7 +86,7 @@ export const signInWithGoogle = async (): Promise<string | null> => {
     );
 
     if (authResponse.data?.token) {
-      console.log("✅ Auth successful");
+      Logger.info("✅ Auth successful");
       await AsyncStorage.setItem(TOKEN_KEY, authResponse.data.token);
       if (authResponse.data.refresh_token) {
         await AsyncStorage.setItem(REFRESH_TOKEN_KEY, authResponse.data.refresh_token);
@@ -98,7 +99,7 @@ export const signInWithGoogle = async (): Promise<string | null> => {
 
     return null;
   } catch (error: any) {
-    console.error("❌ Google Sign-In error:", error);
+    Logger.error("❌ Google Sign-In error:", error);
     return null;
   }
 };
@@ -106,10 +107,16 @@ export const signInWithGoogle = async (): Promise<string | null> => {
 // Sign out
 export const signOut = async (): Promise<void> => {
   try {
+    Logger.info("🔓 Starting sign out...");
     await GoogleSignin.signOut();
+    Logger.info("✅ Google sign out successful");
+    
+    // Clear all tokens
     await AsyncStorage.multiRemove([TOKEN_KEY, REFRESH_TOKEN_KEY, EXPIRES_AT_KEY]);
+    Logger.info("✅ Cleared all tokens from storage");
   } catch (error) {
-    console.error("Error signing out:", error);
+    Logger.error("Error signing out:", error);
+    throw error; // Re-throw to let caller know about the error
   }
 };
 

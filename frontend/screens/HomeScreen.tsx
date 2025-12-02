@@ -8,8 +8,7 @@ import JobFormModal from "../components/JobFormModal";
 import JobCommentsModal from "../components/JobCommentsModal";
 import JobList from "../components/JobList";
 import LoadingScreen from "../components/LoadingScreen";
-import { GoogleLoginButton } from "../components/GoogleLoginButton";
-import { Text } from "react-native-paper";
+import { SettingsModal } from "../components/SettingsModal";
 import { useToast } from "../components/ToastProvider";
 import { useAuth } from "../hooks/useAuth";
 import { useJobs } from "../hooks/useJobs";
@@ -52,6 +51,7 @@ const HomeScreen: React.FC = () => {
         string | null
     >(null);
     const [isCommentsModalVisible, setIsCommentsModalVisible] = useState(false);
+    const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
 
     const commentJob = useMemo(
         () =>
@@ -151,20 +151,10 @@ const HomeScreen: React.FC = () => {
         );
     }
 
-    if (!isAuthenticated) {
-        return (
-            <SafeAreaView style={[styles.container, styles.centerContent]}>
-                <Text variant="headlineMedium" style={styles.welcomeText}>Welcome to Job Tracker</Text>
-                <Text variant="bodyLarge" style={styles.subtitleText}>Sign in to continue</Text>
-                <GoogleLoginButton />
-            </SafeAreaView>
-        );
-    }
-
     return (
         <>
             <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
-            <AppHeader />
+            <AppHeader onSettingsPress={() => setIsSettingsModalVisible(true)} />
             <FilterTabs
                 activeFilter={activeFilter}
                 onFilterChange={setActiveFilter}
@@ -204,6 +194,11 @@ const HomeScreen: React.FC = () => {
                 onAddComment={handleAddComment}
                 onUpdateComment={handleUpdateComment}
                 onDeleteComment={handleDeleteComment}
+            />
+
+            <SettingsModal
+                visible={isSettingsModalVisible}
+                onClose={() => setIsSettingsModalVisible(false)}
             />
         </>
     );

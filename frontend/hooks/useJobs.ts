@@ -25,6 +25,7 @@ import {
   JobStatus,
   JobComment,
 } from "../types";
+import { Logger } from "../services/logger";
 
 interface UpdateJobOptions {
   successMessage?: string | false;
@@ -95,7 +96,7 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
           return cached ? JSON.parse(cached) : [];
         }
       } catch (error) {
-        console.error('[useJobs] Failed to load jobs', error);
+        Logger.error('[useJobs] Failed to load jobs', error);
         const cached = await AsyncStorage.getItem(JOBS_CACHE_KEY);
         if (cached) return JSON.parse(cached);
         throw error;
