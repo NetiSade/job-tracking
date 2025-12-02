@@ -46,7 +46,14 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ comments = [] }) => {
     return (
         <View style={styles.commentsPreview}>
             {visibleComments.map((comment) => (
-                <Card key={comment.id} mode="outlined" style={styles.commentCard}>
+                <Card
+                    key={comment.id}
+                    mode="outlined"
+                    style={[
+                        styles.commentCard,
+                        { backgroundColor: colors.card, borderColor: colors.border }
+                    ]}
+                >
                     <Card.Content>
                         <Text
                             variant="labelSmall"

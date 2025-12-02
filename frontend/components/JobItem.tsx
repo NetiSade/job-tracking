@@ -9,9 +9,9 @@ import { useTheme } from "../context/ThemeContext";
 import CommentsSection from "./CommentsSection";
 
 const STATUS_OPTIONS: { label: string; value: JobStatus }[] = [
-  { label: "Wishlist", value: "wishlist" },
-  { label: "Active", value: "in_progress" },
-  { label: "Archived", value: "archived" },
+  { label: "🌟 Exploring", value: "wishlist" },
+  { label: "🚀 Taking Action", value: "in_progress" },
+  { label: "✅ Completed", value: "archived" },
 ];
 
 interface JobItemProps {
@@ -68,7 +68,14 @@ const JobItem: React.FC<JobItemProps> = ({
     status.replace("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
   return (
-    <Card style={[styles.card, isDragging && styles.dragging]} mode="elevated">
+    <Card
+      style={[
+        styles.card,
+        { backgroundColor: colors.card, borderColor: colors.border },
+        isDragging && styles.dragging
+      ]}
+      mode="elevated"
+    >
       <Card.Content>
         {/* HEADER */}
         <View style={styles.header}>
@@ -84,7 +91,7 @@ const JobItem: React.FC<JobItemProps> = ({
             }
           >
             <Menu.Item
-              title="Change Status"
+              title="Update Journey Stage"
               disabled
               titleStyle={{ fontWeight: "bold" }}
             />
@@ -155,7 +162,7 @@ const JobItem: React.FC<JobItemProps> = ({
             variant="bodyMedium"
             style={{ marginTop: 8, color: colors.text }}
           >
-            Salary expectations: {job.salary_expectations}
+            Target compensation: {job.salary_expectations}
           </Text>
         )}
 
