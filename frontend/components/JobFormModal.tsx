@@ -144,6 +144,7 @@ const JobFormModal: React.FC<JobFormModalProps> = ({
               onPress={handleSubmit}
               disabled={isSubmitting}
               loading={isSubmitting}
+              style={styles.saveButton}
             >
               Save
             </Button>
@@ -168,7 +169,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dialog: {
-    maxHeight: '80%',
+    maxHeight: '90%',
   },
   scrollArea: {
     paddingHorizontal: 0,
@@ -189,6 +190,9 @@ const styles = StyleSheet.create({
   actions: {
     justifyContent: "space-around",
     alignItems: "center",
+  },
+  saveButton: {
+    paddingHorizontal: 8,
   },
 });
 

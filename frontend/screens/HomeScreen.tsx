@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { StyleSheet, View, Alert, StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomNavigation } from "react-native-paper";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import AppHeader from "../components/AppHeader";
 import FloatingActionButton from "../components/FloatingActionButton";
 import JobFormModal from "../components/JobFormModal";
@@ -10,6 +11,7 @@ import JobList from "../components/JobList";
 import LoadingScreen from "../components/LoadingScreen";
 import { SettingsModal } from "../components/SettingsModal";
 import { AboutScreen } from "../screens/AboutScreen";
+import { WelcomeModal } from "../components/WelcomeModal";
 import { useToast } from "../components/ToastProvider";
 import { useAuth } from "../hooks/useAuth";
 import { useJobs } from "../hooks/useJobs";
@@ -39,7 +41,6 @@ const HomeScreen: React.FC = () => {
         handleAddComment,
         handleUpdateComment,
         handleDeleteComment,
-        getJobCountByStatus,
         handleReorderJobs,
     } = useJobs(isAuthenticated);
     const { showToast } = useToast();
@@ -54,6 +55,7 @@ const HomeScreen: React.FC = () => {
     const [isCommentsModalVisible, setIsCommentsModalVisible] = useState(false);
     const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
     const [isAboutModalVisible, setIsAboutModalVisible] = useState(false);
+    const [isWelcomeModalVisible, setIsWelcomeModalVisible] = useState(false);
 
     const commentJob = useMemo(
         () =>
@@ -147,6 +149,30 @@ const HomeScreen: React.FC = () => {
     const handleCloseComments = useCallback((): void => {
         setIsCommentsModalVisible(false);
         setVisibleCommentsJobId(null);
+    }, []);
+
+    // Check if this is the first time opening the app
+    useEffect(() => {
+        const checkFirstLaunch = async () => {
+            try {
+                const hasSeenWelcome = await AsyncStorage.getItem("hasSeenWelcome");
+                if (!hasSeenWelcome) {
+                    setIsWelcomeModalVisible(true);
+                }
+            } catch (error) {
+                console.error("Error checking first launch:", error);
+            }
+        };
+        checkFirstLaunch();
+    }, []);
+
+    const handleCloseWelcome = useCallback(async () => {
+        try {
+            await AsyncStorage.setItem("hasSeenWelcome", "true");
+            setIsWelcomeModalVisible(false);
+        } catch (error) {
+            console.error("Error saving welcome state:", error);
+        }
     }, []);
 
     if (isAuthenticating) {
@@ -272,6 +298,11 @@ const HomeScreen: React.FC = () => {
             <AboutScreen
                 visible={isAboutModalVisible}
                 onClose={() => setIsAboutModalVisible(false)}
+            />
+
+            <WelcomeModal
+                visible={isWelcomeModalVisible}
+                onClose={handleCloseWelcome}
             />
         </View>
     );
