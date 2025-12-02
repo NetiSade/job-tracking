@@ -9,6 +9,7 @@ import JobCommentsModal from "../components/JobCommentsModal";
 import JobList from "../components/JobList";
 import LoadingScreen from "../components/LoadingScreen";
 import { SettingsModal } from "../components/SettingsModal";
+import { AboutScreen } from "../screens/AboutScreen";
 import { useToast } from "../components/ToastProvider";
 import { useAuth } from "../hooks/useAuth";
 import { useJobs } from "../hooks/useJobs";
@@ -52,6 +53,7 @@ const HomeScreen: React.FC = () => {
     >(null);
     const [isCommentsModalVisible, setIsCommentsModalVisible] = useState(false);
     const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
+    const [isAboutModalVisible, setIsAboutModalVisible] = useState(false);
 
     const commentJob = useMemo(
         () =>
@@ -261,6 +263,15 @@ const HomeScreen: React.FC = () => {
             <SettingsModal
                 visible={isSettingsModalVisible}
                 onClose={() => setIsSettingsModalVisible(false)}
+                onAboutPress={() => {
+                    setIsSettingsModalVisible(false);
+                    setIsAboutModalVisible(true);
+                }}
+            />
+
+            <AboutScreen
+                visible={isAboutModalVisible}
+                onClose={() => setIsAboutModalVisible(false)}
             />
         </View>
     );

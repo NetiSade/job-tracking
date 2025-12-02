@@ -7,9 +7,10 @@ import { useAuth } from '../hooks/useAuth';
 interface SettingsModalProps {
     visible: boolean;
     onClose: () => void;
+    onAboutPress: () => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onClose }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onClose, onAboutPress }) => {
     const { isDark, toggleTheme, colors } = useTheme();
     const { signOut } = useAuth();
 
@@ -48,6 +49,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onClose }
                                 color={colors.primary}
                             />
                         )}
+                    />
+                    <Divider style={{ backgroundColor: colors.border }} />
+                    <List.Item
+                        title="About"
+                        titleStyle={{ color: colors.text }}
+                        left={() => <List.Icon icon="information-outline" color={colors.text} />}
+                        onPress={() => {
+                            onAboutPress();
+                        }}
                     />
                     <Divider style={{ backgroundColor: colors.border }} />
                     <List.Item
