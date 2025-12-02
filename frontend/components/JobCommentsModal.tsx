@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { Portal, Dialog, Button, TextInput, Text, Card, IconButton } from "react-native-paper";
 import { Job, JobComment } from "../types";
 import { formatDateTime } from "../utils/date";
@@ -64,73 +64,81 @@ const JobCommentsModal: React.FC<JobCommentsModalProps> = ({
 
   return (
     <Portal>
-      <Dialog visible={visible} onDismiss={onClose} style={styles.dialog}>
-        <Dialog.Title>
-          Comments - {job.company} ({job.position})
-        </Dialog.Title>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoid}
+      >
+        <Dialog visible={visible} onDismiss={onClose} style={styles.dialog}>
+          <Dialog.Title>
+            Comments - {job.company} ({job.position})
+          </Dialog.Title>
 
-        <Dialog.ScrollArea style={styles.scrollArea}>
-          <ScrollView contentContainerStyle={styles.content}>
-            {comments.length === 0 ? (
-              <Text
-                variant="bodyMedium"
-                style={{ textAlign: "center", color: colors.textSecondary, marginVertical: 20 }}
-              >
-                No comments yet. Add one below!
-              </Text>
-            ) : (
-              comments.map((comment) => (
-                <Card key={comment.id} mode="outlined" style={styles.commentCard}>
-                  <Card.Content>
-                    <View style={styles.commentHeader}>
-                      <Text variant="labelSmall" style={{ color: colors.primary }}>
-                        {formatDateTime(comment.updated_at)}
+          <Dialog.ScrollArea style={styles.scrollArea}>
+            <ScrollView contentContainerStyle={styles.content}>
+              {comments.length === 0 ? (
+                <Text
+                  variant="bodyMedium"
+                  style={{ textAlign: "center", color: colors.textSecondary, marginVertical: 20 }}
+                >
+                  No comments yet. Add one below!
+                </Text>
+              ) : (
+                comments.map((comment) => (
+                  <Card key={comment.id} mode="outlined" style={styles.commentCard}>
+                    <Card.Content>
+                      <View style={styles.commentHeader}>
+                        <Text variant="labelSmall" style={{ color: colors.primary }}>
+                          {formatDateTime(comment.updated_at)}
+                        </Text>
+                        <IconButton
+                          icon="delete"
+                          size={16}
+                          onPress={() => handleDeleteComment(comment.id)}
+                        />
+                      </View>
+                      <Text variant="bodyMedium" style={{ color: colors.text }}>
+                        {comment.content}
                       </Text>
-                      <IconButton
-                        icon="delete"
-                        size={16}
-                        onPress={() => handleDeleteComment(comment.id)}
-                      />
-                    </View>
-                    <Text variant="bodyMedium" style={{ color: colors.text }}>
-                      {comment.content}
-                    </Text>
-                  </Card.Content>
-                </Card>
-              ))
-            )}
-          </ScrollView>
-        </Dialog.ScrollArea>
+                    </Card.Content>
+                  </Card>
+                ))
+              )}
+            </ScrollView>
+          </Dialog.ScrollArea>
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            value={newComment}
-            onChangeText={setNewComment}
-            placeholder="Add a comment..."
-            mode="outlined"
-            multiline
-            numberOfLines={3}
-            style={styles.textInput}
-          />
-        </View>
+          <View style={styles.inputContainer}>
+            <TextInput
+              value={newComment}
+              onChangeText={setNewComment}
+              placeholder="Add a comment..."
+              mode="outlined"
+              multiline
+              numberOfLines={3}
+              style={styles.textInput}
+            />
+          </View>
 
-        <Dialog.Actions>
-          <Button onPress={onClose}>Close</Button>
-          <Button
-            mode="contained"
-            onPress={handleAddComment}
-            disabled={!newComment.trim() || isSubmitting}
-            loading={isSubmitting}
-          >
-            Add Comment
-          </Button>
-        </Dialog.Actions>
-      </Dialog>
+          <Dialog.Actions>
+            <Button onPress={onClose}>Close</Button>
+            <Button
+              mode="contained"
+              onPress={handleAddComment}
+              disabled={!newComment.trim() || isSubmitting}
+              loading={isSubmitting}
+            >
+              Add Comment
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </KeyboardAvoidingView>
     </Portal>
   );
 };
 
 const styles = StyleSheet.create({
+  keyboardAvoid: {
+    flex: 1,
+  },
   dialog: {
     maxHeight: '85%',
   },
