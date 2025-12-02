@@ -30,6 +30,17 @@ jest.mock('@react-native-community/netinfo', () => ({
   addEventListener: jest.fn(),
 }));
 
+// Mock Google Sign-In
+jest.mock('@react-native-google-signin/google-signin', () => ({
+  GoogleSignin: {
+    configure: jest.fn(),
+    hasPlayServices: jest.fn(() => Promise.resolve(true)),
+    signIn: jest.fn(() => Promise.resolve({ data: { idToken: 'mock-token' } })),
+    signOut: jest.fn(() => Promise.resolve()),
+  },
+  GoogleSigninButton: 'GoogleSigninButton',
+}));
+
 // Polyfill TextEncoder/TextDecoder
 const { TextEncoder, TextDecoder } = require('util');
 global.TextEncoder = TextEncoder;

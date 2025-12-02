@@ -8,7 +8,8 @@ import JobFormModal from "../components/JobFormModal";
 import JobCommentsModal from "../components/JobCommentsModal";
 import JobList from "../components/JobList";
 import LoadingScreen from "../components/LoadingScreen";
-import ErrorScreen from "../components/ErrorScreen";
+import { GoogleLoginButton } from "../components/GoogleLoginButton";
+import { Text } from "react-native-paper";
 import { useToast } from "../components/ToastProvider";
 import { useAuth } from "../hooks/useAuth";
 import { useJobs } from "../hooks/useJobs";
@@ -152,8 +153,10 @@ const HomeScreen: React.FC = () => {
 
     if (!isAuthenticated) {
         return (
-            <SafeAreaView style={styles.container}>
-                <ErrorScreen />
+            <SafeAreaView style={[styles.container, styles.centerContent]}>
+                <Text variant="headlineMedium" style={styles.welcomeText}>Welcome to Job Tracker</Text>
+                <Text variant="bodyLarge" style={styles.subtitleText}>Sign in to continue</Text>
+                <GoogleLoginButton />
             </SafeAreaView>
         );
     }
@@ -215,6 +218,19 @@ const stylesFactory = (colors: ThemeColors) => StyleSheet.create({
         flex: 1,
         paddingHorizontal: 16,
         paddingVertical: 16,
+    },
+    centerContent: {
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    welcomeText: {
+        marginBottom: 8,
+        fontWeight: "bold",
+        color: colors.text,
+    },
+    subtitleText: {
+        marginBottom: 32,
+        color: colors.textSecondary,
     },
 });
 

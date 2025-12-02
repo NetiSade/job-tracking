@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Job Tracker",
-    "slug": "job-tracking-app",
+    "slug": "job-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,6 +16,7 @@
     ],
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.neti.s.jobtracking.app",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
@@ -23,6 +24,7 @@
       }
     },
     "android": {
+      "package": "com.neti.s.jobtracking.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -30,7 +32,15 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "@react-native-google-signin/google-signin"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "659cef56-35df-4e43-aaad-92b1ee302011"
+      }
+    },
+    "owner": "netisade"
   }
 }
-

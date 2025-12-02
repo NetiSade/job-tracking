@@ -3,17 +3,27 @@ import supabase from "../config/supabase";
 
 const router = express.Router();
 
-// Create anonymous user and return token
-router.post("/anonymous", async (_req: Request, res: Response): Promise<void> => {
+// Sign in with Google ID token
+router.post("/google", async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log("Creating anonymous user...");
+    const { id_token } = req.body;
 
-    // Create anonymous user via Supabase
-    const { data, error } = await supabase.auth.signInAnonymously();
+    if (!id_token) {
+      res.status(400).json({ error: "ID token required" });
+      return;
+    }
+
+    console.log("🔐 Verifying Google token...");
+
+    // Verify token and sign in via Supabase
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token: id_token,
+    });
 
     if (error) {
       console.error("Supabase auth error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(401).json({ error: error.message });
       return;
     }
 
@@ -22,7 +32,7 @@ router.post("/anonymous", async (_req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    console.log("✅ Anonymous user created:", data.user?.id);
+    console.log("✅ User authenticated:", data.user?.id);
 
     // Return the access token and refresh token to the client
     res.json({
@@ -33,7 +43,7 @@ router.post("/anonymous", async (_req: Request, res: Response): Promise<void> =>
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("Error creating anonymous user:", message);
+    console.error("Error authenticating with Google:", message);
     res.status(500).json({ error: message });
   }
 });
