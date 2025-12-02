@@ -1,7 +1,11 @@
 import React, { useRef, useEffect } from "react";
 import { Animated, Pressable } from "react-native";
 import { FAB } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../context/ThemeContext";
+
+// Standard bottom navigation height in React Native Paper
+const BOTTOM_NAV_HEIGHT = 80;
 
 interface FloatingActionButtonProps {
   onPress: () => void;
@@ -9,7 +13,11 @@ interface FloatingActionButtonProps {
 
 const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onPress }) => {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const scale = useRef(new Animated.Value(0.9)).current; // small start size
+
+  // Calculate dynamic bottom position: bottom nav height + bottom safe area
+  const bottomOffset = BOTTOM_NAV_HEIGHT + insets.bottom;
 
   // On mount → little entrance bounce
   useEffect(() => {
@@ -46,7 +54,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onPress }) 
         transform: [{ scale }],
         position: "absolute",
         right: 0,
-        bottom: 0,
+        bottom: bottomOffset,
       }}
     >
       <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>

@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { StyleSheet, View, Alert, StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { BottomNavigation } from "react-native-paper";
 import AppHeader from "../components/AppHeader";
-import FilterTabs from "../components/FilterTabs";
 import FloatingActionButton from "../components/FloatingActionButton";
 import JobFormModal from "../components/JobFormModal";
 import JobCommentsModal from "../components/JobCommentsModal";
@@ -16,6 +16,7 @@ import { Job, CreateJobInput, UpdateJobInput, JobStatus } from "../types";
 import { useThemedStyles } from "../hooks/useThemedStyles";
 import { ThemeColors } from "../constants/theme";
 import { useTheme } from "react-native-paper";
+import { useTheme as useCustomTheme } from "../context/ThemeContext";
 
 const STATUS_LABELS: Record<JobStatus, string> = {
     wishlist: "🌟 Exploring",
@@ -37,7 +38,6 @@ const HomeScreen: React.FC = () => {
         handleAddComment,
         handleUpdateComment,
         handleDeleteComment,
-        getFilteredJobs,
         getJobCountByStatus,
         handleReorderJobs,
     } = useJobs(isAuthenticated);
@@ -151,20 +151,53 @@ const HomeScreen: React.FC = () => {
         );
     }
 
-    return (
-        <>
-            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
-            <AppHeader onSettingsPress={() => setIsSettingsModalVisible(true)} />
-            <FilterTabs
-                activeFilter={activeFilter}
-                onFilterChange={setActiveFilter}
-                getJobCount={getJobCountByStatus}
-            />
-            <View style={styles.container}>
+    const [index, setIndex] = useState(0);
+    const customTheme = useCustomTheme();
 
+    const routes = useMemo(
+        () => [
+            {
+                key: "in_progress",
+                title: "Taking Action",
+                focusedIcon: "rocket",
+                unfocusedIcon: "rocket-outline",
+                badge: getJobCountByStatus("in_progress"),
+            },
+            {
+                key: "wishlist",
+                title: "Exploring",
+                focusedIcon: "star",
+                unfocusedIcon: "star-outline",
+                badge: getJobCountByStatus("wishlist"),
+            },
+            {
+                key: "archived",
+                title: "Archived",
+                focusedIcon: "folder",
+                unfocusedIcon: "folder-outline",
+                badge: getJobCountByStatus("archived"),
+            },
+        ],
+        [getJobCountByStatus]
+    );
+
+    // Sync bottom nav index with active filter
+    React.useEffect(() => {
+        const routeIndex = routes.findIndex((route) => route.key === activeFilter);
+        if (routeIndex !== -1 && routeIndex !== index) {
+            setIndex(routeIndex);
+        }
+    }, [activeFilter, routes, index]);
+
+    const renderScene = useCallback(
+        ({ route }: { route: { key: string } }) => {
+            const status = route.key as JobStatus;
+            const filteredJobs = jobs.filter((job) => job.status === status);
+
+            return (
                 <View style={styles.listSection}>
                     <JobList
-                        jobs={getFilteredJobs()}
+                        jobs={filteredJobs}
                         onEdit={handleEditJob}
                         onDelete={handleDeleteJob}
                         onViewComments={handleViewComments}
@@ -176,7 +209,32 @@ const HomeScreen: React.FC = () => {
                         }}
                     />
                 </View>
-            </View>
+            );
+        },
+        [jobs, handleEditJob, handleDeleteJob, handleViewComments, handleChangeJobStatus, handleReorderJobs, loading, loadJobs]
+    );
+
+    const handleIndexChange = useCallback(
+        (newIndex: number) => {
+            setIndex(newIndex);
+            setActiveFilter(routes[newIndex].key as JobStatus);
+        },
+        [routes, setActiveFilter]
+    );
+
+    return (
+        <View style={[styles.container, { backgroundColor: customTheme.colors.background }]}>
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+            <AppHeader onSettingsPress={() => setIsSettingsModalVisible(true)} />
+
+            <BottomNavigation
+                navigationState={{ index, routes }}
+                onIndexChange={handleIndexChange}
+                renderScene={renderScene}
+                barStyle={{ backgroundColor: customTheme.colors.card }}
+                activeColor={customTheme.colors.primary}
+                inactiveColor={customTheme.colors.textSecondary}
+            />
 
             <FloatingActionButton onPress={handleOpenAddModal} />
 
@@ -200,7 +258,7 @@ const HomeScreen: React.FC = () => {
                 visible={isSettingsModalVisible}
                 onClose={() => setIsSettingsModalVisible(false)}
             />
-        </>
+        </View>
     );
 };
 
@@ -212,7 +270,8 @@ const stylesFactory = (colors: ThemeColors) => StyleSheet.create({
     listSection: {
         flex: 1,
         paddingHorizontal: 16,
-        paddingVertical: 16,
+        paddingTop: 16,
+        paddingBottom: 0,
     },
     centerContent: {
         justifyContent: "center",
