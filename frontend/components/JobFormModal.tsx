@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { View, StyleSheet, ScrollView } from "react-native";
 import { Portal, Dialog, Button, TextInput, Text } from "react-native-paper";
 import { Job, CreateJobInput, UpdateJobInput, JobStatus } from "../types";
 import { useJobForm } from "../hooks/useJobForm";

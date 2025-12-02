@@ -43,10 +43,6 @@ const JobItem: React.FC<JobItemProps> = ({
     onEdit(job);
   }, [job, onEdit]);
 
-  const handleDeletePress = useCallback(() => {
-    onDelete(job.id);
-  }, [job.id, onDelete]);
-
   const handleCommentsPress = useCallback(() => {
     onViewComments(job);
   }, [job, onViewComments]);

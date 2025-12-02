@@ -128,7 +128,7 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
 
       return { previousJobs };
     },
-    onError: (err, newJob, context) => {
+    onError: (_err, _newJob, context) => {
       queryClient.setQueryData(QUERY_KEY, context?.previousJobs);
       Alert.alert("Error", "Failed to create job");
     },
