@@ -81,11 +81,15 @@ const HomeScreen: React.FC = () => {
             if (editingJob) {
                 await handleUpdateJob(editingJob.id, jobData as UpdateJobInput);
             } else {
+                // Creating a new job
                 await handleCreateJob(jobData as CreateJobInput);
+                // Navigate to the tab matching the new job's status
+                const newJobStatus = (jobData as CreateJobInput).status;
+                setActiveFilter(newJobStatus);
             }
             handleCloseJobForm();
         },
-        [editingJob, handleUpdateJob, handleCreateJob, handleCloseJobForm]
+        [editingJob, handleUpdateJob, handleCreateJob, handleCloseJobForm, setActiveFilter]
     );
 
     const handleChangeJobStatus = useCallback(
