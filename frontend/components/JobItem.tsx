@@ -1,7 +1,15 @@
 import React, { useCallback, useState, memo } from "react";
 import * as Haptics from "expo-haptics";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
-import { Card, Text, Button, Chip, IconButton, Menu, Divider } from "react-native-paper";
+import {
+  Card,
+  Text,
+  Button,
+  Chip,
+  IconButton,
+  Menu,
+  Divider,
+} from "react-native-paper";
 import { Job, JobStatus } from "../types";
 import { getStatusColor } from "../utils/jobStyles";
 import { formatDateTime } from "../utils/date";
@@ -66,7 +74,7 @@ const JobItem: React.FC<JobItemProps> = ({
       style={[
         styles.card,
         { backgroundColor: colors.card, borderColor: colors.border },
-        isDragging && styles.dragging
+        isDragging && styles.dragging,
       ]}
       mode="elevated"
     >
@@ -108,7 +116,6 @@ const JobItem: React.FC<JobItemProps> = ({
               titleStyle={{ color: "red" }}
             />
           </Menu>
-
 
           <View style={styles.headerTextContainer}>
             <Text variant="titleLarge" style={{ color: colors.text }}>
@@ -171,7 +178,11 @@ const JobItem: React.FC<JobItemProps> = ({
         <Button mode="text" onPress={handleEditPress} icon="pencil">
           Edit
         </Button>
-        <Button mode="text" onPress={handleCommentsPress} icon="comment-outline">
+        <Button
+          mode="text"
+          onPress={handleCommentsPress}
+          icon="comment-outline"
+        >
           Comments
         </Button>
       </Card.Actions>
