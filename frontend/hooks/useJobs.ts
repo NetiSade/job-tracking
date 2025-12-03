@@ -34,6 +34,7 @@ interface UpdateJobOptions {
 interface UseJobsReturn {
   jobs: Job[];
   loading: boolean;
+  isInitialLoading: boolean;
   activeFilter: JobStatus;
   setActiveFilter: (filter: JobStatus) => void;
   loadJobs: () => Promise<void>; // Kept for compatibility but effectively a no-op or refetch
@@ -76,7 +77,7 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
     "in_progress"
   );
 
-  const { data: jobs = [], isLoading: loading, refetch } = useQuery({
+  const { data: jobs = [], isLoading: loading, isFetching, refetch } = useQuery({
     queryKey: QUERY_KEY,
     queryFn: async () => {
       if (!isAuthenticated) return [];
@@ -105,6 +106,9 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
     enabled: isAuthenticated,
     initialData: [],
   });
+
+  // Initial loading is when we're fetching and have no jobs yet
+  const isInitialLoading = isFetching && jobs.length === 0;
 
   const createJobMutation = useMutation({
     mutationFn: createJob,
@@ -287,6 +291,7 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
   return {
     jobs,
     loading,
+    isInitialLoading,
     activeFilter,
     setActiveFilter,
     loadJobs: async () => { await refetch(); },

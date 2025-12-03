@@ -29,9 +29,11 @@ const STATUS_LABELS: Record<JobStatus, string> = {
 
 const HomeScreen: React.FC = () => {
     const { isAuthenticating, isAuthenticated } = useAuth();
+    const customTheme = useCustomTheme();
     const {
         jobs,
         loading,
+        isInitialLoading,
         activeFilter,
         setActiveFilter,
         loadJobs,
@@ -47,24 +49,50 @@ const HomeScreen: React.FC = () => {
     const styles = useThemedStyles(stylesFactory);
     const isDark = useTheme();
 
+    // State hooks
     const [isJobFormVisible, setIsJobFormVisible] = useState(false);
     const [editingJob, setEditingJob] = useState<Job | null>(null);
-    const [visibleCommentsJobId, setVisibleCommentsJobId] = useState<
-        string | null
-    >(null);
+    const [visibleCommentsJobId, setVisibleCommentsJobId] = useState<string | null>(null);
     const [isCommentsModalVisible, setIsCommentsModalVisible] = useState(false);
     const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
     const [isAboutModalVisible, setIsAboutModalVisible] = useState(false);
     const [isWelcomeModalVisible, setIsWelcomeModalVisible] = useState(false);
+    const [index, setIndex] = useState(0);
 
+    // Memoized values
     const commentJob = useMemo(
         () =>
             visibleCommentsJobId
                 ? jobs.find((job) => job.id === visibleCommentsJobId) ?? null
                 : null,
-        [jobs, visibleCommentsJobId]
+        [visibleCommentsJobId, jobs]
     );
 
+    const routes = useMemo(
+        () => [
+            {
+                key: "in_progress",
+                title: "Taking Action",
+                focusedIcon: "rocket",
+                unfocusedIcon: "rocket-outline",
+            },
+            {
+                key: "wishlist",
+                title: "Exploring",
+                focusedIcon: "star",
+                unfocusedIcon: "star-outline",
+            },
+            {
+                key: "archived",
+                title: "Archived",
+                focusedIcon: "folder",
+                unfocusedIcon: "folder-outline",
+            },
+        ],
+        []
+    );
+
+    // Callbacks
     const handleOpenAddModal = useCallback((): void => {
         setEditingJob(null);
         setIsJobFormVisible(true);
@@ -102,12 +130,15 @@ const HomeScreen: React.FC = () => {
                 return;
             }
 
-            const applyStatusChange = async (): Promise<void> => {
+            const applyStatusChange = async () => {
                 try {
                     await handleUpdateJob(job.id, { status }, { successMessage: false });
-                    showToast(`Moved to ${STATUS_LABELS[status]}`, { type: "success" });
+                    showToast(
+                        `"${job.position}" at ${job.company} moved to ${STATUS_LABELS[status]}`,
+                        { type: "success" }
+                    );
                 } catch (error) {
-                    console.error("Failed to update status", error);
+                    console.error("[HomeScreen] Failed to update job status", error);
                 }
             };
 
@@ -138,7 +169,7 @@ const HomeScreen: React.FC = () => {
                 ]
             );
         },
-        [handleUpdateJob]
+        [handleUpdateJob, showToast]
     );
 
     const handleViewComments = useCallback((job: Job): void => {
@@ -151,21 +182,6 @@ const HomeScreen: React.FC = () => {
         setVisibleCommentsJobId(null);
     }, []);
 
-    // Check if this is the first time opening the app
-    useEffect(() => {
-        const checkFirstLaunch = async () => {
-            try {
-                const hasSeenWelcome = await AsyncStorage.getItem("hasSeenWelcome");
-                if (!hasSeenWelcome) {
-                    setIsWelcomeModalVisible(true);
-                }
-            } catch (error) {
-                console.error("Error checking first launch:", error);
-            }
-        };
-        checkFirstLaunch();
-    }, []);
-
     const handleCloseWelcome = useCallback(async () => {
         try {
             await AsyncStorage.setItem("hasSeenWelcome", "true");
@@ -175,51 +191,13 @@ const HomeScreen: React.FC = () => {
         }
     }, []);
 
-    if (isAuthenticating) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <LoadingScreen />
-            </SafeAreaView>
-        );
-    }
-
-    const [index, setIndex] = useState(0);
-    const customTheme = useCustomTheme();
-
-    const routes = useMemo(
-        () => [
-            {
-                key: "in_progress",
-                title: "Taking Action",
-                focusedIcon: "rocket",
-                unfocusedIcon: "rocket-outline",
-                // badge: getJobCountByStatus("in_progress"),
-            },
-            {
-                key: "wishlist",
-                title: "Exploring",
-                focusedIcon: "star",
-                unfocusedIcon: "star-outline",
-                // badge: getJobCountByStatus("wishlist"),
-            },
-            {
-                key: "archived",
-                title: "Archived",
-                focusedIcon: "folder",
-                unfocusedIcon: "folder-outline",
-                // badge: getJobCountByStatus("archived"),
-            },
-        ],
-        []
+    const handleIndexChange = useCallback(
+        (newIndex: number) => {
+            setIndex(newIndex);
+            setActiveFilter(routes[newIndex].key as JobStatus);
+        },
+        [routes, setActiveFilter]
     );
-
-    // Sync bottom nav index with active filter
-    React.useEffect(() => {
-        const routeIndex = routes.findIndex((route) => route.key === activeFilter);
-        if (routeIndex !== -1 && routeIndex !== index) {
-            setIndex(routeIndex);
-        }
-    }, [activeFilter, routes, index]);
 
     const renderScene = useCallback(
         ({ route }: { route: { key: string } }) => {
@@ -243,16 +221,53 @@ const HomeScreen: React.FC = () => {
                 </View>
             );
         },
-        [jobs, handleEditJob, handleDeleteJob, handleViewComments, handleChangeJobStatus, handleReorderJobs, loading, loadJobs]
+        [jobs, handleEditJob, handleDeleteJob, handleViewComments, handleChangeJobStatus, handleReorderJobs, loading, loadJobs, styles.listSection]
     );
 
-    const handleIndexChange = useCallback(
-        (newIndex: number) => {
-            setIndex(newIndex);
-            setActiveFilter(routes[newIndex].key as JobStatus);
-        },
-        [routes, setActiveFilter]
-    );
+    // Effects
+    // Check if this is the first time opening the app
+    useEffect(() => {
+        const checkFirstLaunch = async () => {
+            try {
+                const hasSeenWelcome = await AsyncStorage.getItem("hasSeenWelcome");
+                if (!hasSeenWelcome) {
+                    setIsWelcomeModalVisible(true);
+                }
+            } catch (error) {
+                console.error("Error checking first launch:", error);
+            }
+        };
+        checkFirstLaunch();
+    }, []);
+
+    // Sync bottom nav index with active filter
+    useEffect(() => {
+        const routeIndex = routes.findIndex((route) => route.key === activeFilter);
+        if (routeIndex !== -1 && routeIndex !== index) {
+            setIndex(routeIndex);
+        }
+    }, [activeFilter, routes, index]);
+
+    // Render logic - Conditional returns MUST happen after all hooks
+    if (isAuthenticating) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <LoadingScreen />
+            </SafeAreaView>
+        );
+    }
+
+    if (isInitialLoading) {
+        return (
+            <>
+                <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+                <AppHeader onSettingsPress={() => setIsSettingsModalVisible(true)} />
+                <View style={[styles.container, styles.centerContent, { backgroundColor: customTheme.colors.background }]}>
+                    <LoadingScreen />
+                </View>
+            </>
+        );
+    }
 
     return (
         <View style={[styles.container, { backgroundColor: customTheme.colors.background }]}>
