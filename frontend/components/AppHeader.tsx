@@ -10,9 +10,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSettingsPress }) => {
   const { colors } = useTheme();
 
   return (
-    <Appbar.Header style={{ backgroundColor: colors.headerBackground }} >
+    <Appbar.Header style={{ backgroundColor: colors.headerBackground }}>
       <Appbar.Content
-        title="My Career Journey 🚀"
+        title="My Career Journey 👨‍💻👩‍💻"
         titleStyle={{ color: colors.headerText }}
       />
       <Appbar.Action
@@ -25,4 +25,3 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSettingsPress }) => {
 };
 
 export default AppHeader;
-
