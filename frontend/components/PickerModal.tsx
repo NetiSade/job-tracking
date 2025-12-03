@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { PickerOption } from "../types";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface PickerModalProps {
   visible: boolean;
@@ -39,7 +40,7 @@ const PickerModal: React.FC<PickerModalProps> = ({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
       <TouchableOpacity
@@ -47,7 +48,7 @@ const PickerModal: React.FC<PickerModalProps> = ({
         activeOpacity={1}
         onPress={handleOverlayPress}
       >
-        <View style={styles.content}>
+        <SafeAreaView style={styles.content}>
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
             <TouchableOpacity onPress={onClose}>
@@ -60,10 +61,7 @@ const PickerModal: React.FC<PickerModalProps> = ({
               return (
                 <TouchableOpacity
                   key={option.value}
-                  style={[
-                    styles.option,
-                    isSelected && styles.optionSelected,
-                  ]}
+                  style={[styles.option, isSelected && styles.optionSelected]}
                   onPress={() => handleSelect(option.value)}
                 >
                   <Text
@@ -78,7 +76,7 @@ const PickerModal: React.FC<PickerModalProps> = ({
               );
             })}
           </ScrollView>
-        </View>
+        </SafeAreaView>
       </TouchableOpacity>
     </Modal>
   );
@@ -133,4 +131,3 @@ const styles = StyleSheet.create({
 });
 
 export default PickerModal;
-
