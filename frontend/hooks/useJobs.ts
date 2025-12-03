@@ -159,13 +159,13 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
     },
     onError: (err, vars, context) => {
       queryClient.setQueryData(QUERY_KEY, context?.previousJobs);
-      console.error('[useJobs] Failed to update job ' + vars.id, err);
+      Logger.error('[useJobs] Failed to update job ' + vars.id, err);
       Alert.alert("Error", "Failed to update job");
     },
     onSuccess: async (_, vars) => {
        // Success message handled in wrapper
        queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-       console.log('[useJobs] Job updated successfully ' + vars.id);
+       Logger.info('[useJobs] Job updated successfully ' + vars.id);
     }
   });
 
@@ -183,7 +183,7 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
     },
     onError: (err, jobId, context) => {
       queryClient.setQueryData(QUERY_KEY, context?.previousJobs);
-      console.error('[useJobs] Failed to delete job ' + jobId, err);
+      Logger.error('[useJobs] Failed to delete job ' + jobId, err);
       Alert.alert("Error", "Failed to delete job");
     },
     onSuccess: async () => {
@@ -272,7 +272,7 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
       });
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (error) {
-      console.error("[useJobs] Failed to reorder jobs", error);
+      Logger.error("[useJobs] Failed to reorder jobs", error);
       Alert.alert("Error", "Failed to save job order");
       // Rollback
       queryClient.setQueryData(QUERY_KEY, previousJobs);

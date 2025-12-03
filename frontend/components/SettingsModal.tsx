@@ -24,7 +24,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onClose, 
                     text: 'Logout',
                     style: 'destructive',
                     onPress: async () => {
-                        console.log('User confirmed logout');
                         await signOut();
                         onClose();
                     },

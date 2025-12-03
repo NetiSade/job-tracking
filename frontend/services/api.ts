@@ -10,6 +10,7 @@ import {
   ReorderJobsInput,
 } from '../types';
 import { getSessionToken } from './auth';
+import { Logger } from './logger';
 
 const api: AxiosInstance = axios.create({
   baseURL: API_URL,
@@ -51,7 +52,7 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch (refreshError) {
-        console.error("Failed to refresh token:", refreshError);
+        Logger.error("Failed to refresh token:", refreshError);
       }
     }
 

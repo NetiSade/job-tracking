@@ -35,11 +35,11 @@ const refreshToken = async (): Promise<string | null> => {
   try {
     const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
     if (!refreshToken) {
-      console.log("No refresh token found");
+      Logger.warn("No refresh token found");
       return null;
     }
 
-    console.log("🔄 Refreshing token...");
+    Logger.info("🔄 Refreshing token...");
     const response = await axios.post(
       `${API_URL}/auth/refresh`,
       { refresh_token: refreshToken },
@@ -131,7 +131,7 @@ export const getSessionToken = async (): Promise<string | null> => {
     // Check if token is expired
     const expired = await isTokenExpired();
     if (expired) {
-      console.log("Token expired, refreshing...");
+      Logger.info("Token expired, refreshing...");
       const refreshedToken = await refreshToken();
       if (refreshedToken) {
         return refreshedToken;
@@ -141,7 +141,7 @@ export const getSessionToken = async (): Promise<string | null> => {
 
     return token;
   } catch (error) {
-    console.error("Error getting session:", error);
+    Logger.error("Error getting session:", error);
     return null;
   }
 };
