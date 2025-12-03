@@ -26,6 +26,7 @@ import {
   JobComment,
 } from "../types";
 import { Logger } from "../services/logger";
+import { useToast } from "../components/ToastProvider";
 
 interface UpdateJobOptions {
   successMessage?: string | false;
@@ -73,6 +74,7 @@ const sortCommentsByCreated = (comments: JobComment[]): JobComment[] =>
 export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
   const queryClient = useQueryClient();
   const isOnline = useNetworkStatus();
+  const { showToast } = useToast();
   const [activeFilter, setActiveFilter] = useState<JobStatus>(
     "in_progress"
   );
@@ -138,7 +140,7 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
     },
     onSuccess: async () => {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Success", "Job added successfully");
+      showToast("Job added successfully", { type: "success" });
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
   });
@@ -186,7 +188,7 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
     },
     onSuccess: async () => {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Success", "Job deleted successfully");
+      showToast("Job deleted successfully", { type: "success" });
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     }
   });
@@ -217,9 +219,9 @@ export const useJobs = (isAuthenticated: boolean): UseJobsReturn => {
       
     if (successMessage) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Success", successMessage);
+      showToast(successMessage, { type: "success" });
     }
-  }, [isOnline, updateJobMutation]);
+  }, [isOnline, updateJobMutation, showToast]);
 
   const handleDeleteJob = useCallback((jobId: string) => {
     if (!isOnline) {

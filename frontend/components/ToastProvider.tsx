@@ -8,6 +8,10 @@ import React, {
   useState,
 } from "react";
 import { Animated, StyleSheet, View, Text } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+// Standard bottom navigation height in React Native Paper
+const BOTTOM_NAV_HEIGHT = 80;
 
 type ToastType = "default" | "success" | "error";
 
@@ -36,6 +40,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isVisible, setIsVisible] = useState(false);
   const opacity = useRef(new Animated.Value(0)).current;
   const hideTimeout = useRef<NodeJS.Timeout | null>(null);
+  const insets = useSafeAreaInsets();
+
+  // Calculate dynamic bottom position: bottom nav height + bottom safe area + extra padding
+  const bottomOffset = BOTTOM_NAV_HEIGHT + insets.bottom + 16;
 
   const clearHideTimeout = useCallback(() => {
     if (hideTimeout.current) {
@@ -105,7 +113,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
     <ToastContext.Provider value={contextValue}>
       {children}
       {toast ? (
-        <View pointerEvents="none" style={styles.container}>
+        <View pointerEvents="none" style={[styles.container, { bottom: bottomOffset }]}>
           <Animated.View
             style={[
               styles.toast,
@@ -134,9 +142,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: 80,
+    // bottom is set dynamically via style prop
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 9999, // Ensure it's on top
   },
   toast: {
     maxWidth: "80%",
@@ -153,10 +162,10 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.85)",
   },
   toast_success: {
-    backgroundColor: "#1f9142",
+    backgroundColor: "#4CAF50",
   },
   toast_error: {
-    backgroundColor: "#c0392b",
+    backgroundColor: "#F44336",
   },
   toastText: {
     color: "#fff",
