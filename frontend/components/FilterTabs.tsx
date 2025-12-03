@@ -3,6 +3,7 @@ import { View, StyleSheet } from "react-native";
 import { SegmentedButtons } from "react-native-paper";
 import { JobStatus } from "../types";
 import { useTheme } from "../context/ThemeContext";
+import { STATUS_LABELS } from "../utils/statusMapping";
 
 interface FilterTabsProps {
   activeFilter: JobStatus;
@@ -20,15 +21,15 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
   const buttons = [
     {
       value: "in_progress",
-      label: `🚀 Taking Action (${getJobCount("in_progress")})`,
+      label: `${STATUS_LABELS.in_progress} (${getJobCount("in_progress")})`,
     },
     {
       value: "wishlist",
-      label: `🌟 Exploring (${getJobCount("wishlist")})`,
+      label: `${STATUS_LABELS.wishlist} (${getJobCount("wishlist")})`,
     },
     {
       value: "archived",
-      label: `📂 Archived (${getJobCount("archived")})`,
+      label: `${STATUS_LABELS.archived} (${getJobCount("archived")})`,
     },
   ];
 

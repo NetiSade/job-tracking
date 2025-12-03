@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Job, JobStatus, PickerOption } from "../types";
+import { STATUS_OPTIONS } from "../utils/statusMapping";
 
 interface UseJobFormReturn {
   company: string;
@@ -26,11 +27,7 @@ export const useJobForm = (initialValues?: Job | null): UseJobFormReturn => {
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const statusOptions: PickerOption[] = [
-    { label: "🌟 Exploring", value: "wishlist" },
-    { label: "🚀 Taking Action", value: "in_progress" },
-    { label: "📂 Archived", value: "archived" },
-  ];
+  const statusOptions: PickerOption[] = STATUS_OPTIONS;
 
   const resetForm = useCallback((): void => {
     setCompany("");

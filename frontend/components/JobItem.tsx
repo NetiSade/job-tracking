@@ -7,12 +7,7 @@ import { getStatusColor } from "../utils/jobStyles";
 import { formatDateTime } from "../utils/date";
 import { useTheme } from "../context/ThemeContext";
 import CommentsSection from "./CommentsSection";
-
-const STATUS_OPTIONS: { label: string; value: JobStatus }[] = [
-  { label: "🌟 Exploring", value: "wishlist" },
-  { label: "🚀 Taking Action", value: "in_progress" },
-  { label: "📂 Archived", value: "archived" },
-];
+import { STATUS_OPTIONS, getStatusLabel } from "../utils/statusMapping";
 
 interface JobItemProps {
   job: Job;
@@ -64,8 +59,7 @@ const JobItem: React.FC<JobItemProps> = ({
     }
   }, [onDrag]);
 
-  const formatStatus = (status: JobStatus): string =>
-    status.replace("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+  // Use centralized status labels to keep copy consistent across the app
 
   return (
     <Card
@@ -131,7 +125,7 @@ const JobItem: React.FC<JobItemProps> = ({
               style={{ backgroundColor: getStatusColor(job.status, colors) }}
               textStyle={{ color: "#ffffff" }}
             >
-              {formatStatus(job.status)}
+              {getStatusLabel(job.status)}
             </Chip>
 
             {onDrag && (

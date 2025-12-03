@@ -7,12 +7,7 @@ import { useJobs } from "../hooks/useJobs";
 import { Job, CreateJobInput, UpdateJobInput, JobStatus } from "../types";
 import { useTheme } from "react-native-paper";
 import { Logger } from "../services/logger";
-
-const STATUS_LABELS: Record<JobStatus, string> = {
-    wishlist: "🌟 Exploring",
-    in_progress: "🚀 Taking Action",
-    archived: "📂 Archived",
-};
+import { STATUS_LABELS, STATUS_TITLES } from "../utils/statusMapping";
 
 export const useHomeScreen = () => {
     const { isAuthenticating, isAuthenticated } = useAuth();
@@ -57,19 +52,19 @@ export const useHomeScreen = () => {
         () => [
             {
                 key: "in_progress",
-                title: "Taking Action",
+                title: STATUS_TITLES.in_progress,
                 focusedIcon: "rocket",
                 unfocusedIcon: "rocket-outline",
             },
             {
                 key: "wishlist",
-                title: "Exploring",
+                title: STATUS_TITLES.wishlist,
                 focusedIcon: "star",
                 unfocusedIcon: "star-outline",
             },
             {
                 key: "archived",
-                title: "Archived",
+                title: STATUS_TITLES.archived,
                 focusedIcon: "folder",
                 unfocusedIcon: "folder-outline",
             },
