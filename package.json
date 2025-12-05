@@ -1,0 +1,12 @@
+{
+    "name": "job-tracking-monorepo",
+    "private": true,
+    "workspaces": [
+        "frontend",
+        "web",
+        "packages/*"
+    ],
+    "scripts": {
+        "test": "npm run test --workspaces"
+    }
+}

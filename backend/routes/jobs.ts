@@ -220,7 +220,7 @@ router.post(
 router.put(
   "/reorder",
   async (
-    req: Request<{}, {}, { orders: { id: string; sort_order: number }[] }>,
+    req: Request<{}, {}, { orders: { id: string; sort_order: number; status?: string }[] }>,
     res: Response
   ): Promise<void> => {
     try {
@@ -232,7 +232,7 @@ router.put(
         return;
       }
 
-      const normalizedOrders: { id: string; sort_order: number }[] = [];
+      const normalizedOrders: { id: string; sort_order: number; status?: string }[] = [];
       const seenIds = new Set<string>();
       for (const entry of orders) {
         if (
@@ -250,6 +250,7 @@ router.put(
         normalizedOrders.push({
           id: entry.id,
           sort_order: Math.max(0, Math.floor(entry.sort_order)),
+          status: entry.status, // Include status if provided
         });
         seenIds.add(entry.id);
       }
@@ -315,12 +316,17 @@ router.put(
         }
       }
 
-      // Phase 2: Set final values
-      for (const { id, sort_order } of normalizedOrders) {
+      // Phase 2: Set final values (including status if provided)
+      for (const order of normalizedOrders) {
+        const updateData: any = { sort_order: order.sort_order };
+        if (order.status) {
+          updateData.status = order.status;
+        }
+        
         const { error: updateError } = await supabase
           .from("jobs")
-          .update({ sort_order })
-          .eq("id", id);
+          .update(updateData)
+          .eq("id", order.id);
 
         if (updateError) {
           console.error("Supabase error updating job order:", updateError);
