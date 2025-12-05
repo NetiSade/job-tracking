@@ -9,7 +9,7 @@ import JobCommentsModal from "../components/JobCommentsModal";
 import JobList from "../components/JobList";
 import LoadingScreen from "../components/LoadingScreen";
 import { SettingsModal } from "../components/SettingsModal";
-import { AboutScreen } from "../screens/AboutScreen";
+import { AboutScreen } from "./AboutScreen";
 import { WelcomeModal } from "../components/WelcomeModal";
 import { useThemedStyles } from "../hooks/useThemedStyles";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
