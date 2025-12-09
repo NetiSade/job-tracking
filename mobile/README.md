@@ -1,43 +1,41 @@
-# Job Tracking App - Frontend (TypeScript)
+# Job Tracker - Mobile App
 
-React Native app for tracking job applications built with TypeScript and Expo.
-
-## Setup
-
-1. Install dependencies:
-```bash
-npm install
-```
-
-2. Configure environment variables or update `config.ts` with:
-   - `API_URL` — your backend URL (`http://localhost:3000/api` for simulator, `http://10.0.2.2:3000/api` for Android emulator, or `http://YOUR_IP:3000/api` for physical device)
-   - `SUPABASE` keys (if not using `.env` values)
-
-3. Start the app:
-```bash
-npm start
-```
-
-4. Run on your preferred platform:
-   - Press `i` for iOS Simulator
-   - Press `a` for Android Emulator
-   - Scan QR code with Expo Go app on your physical device
+A React Native mobile application built with Expo, featuring seamless authentication and real-time job tracking.
 
 ## Features
 
-- Add, edit, and delete job applications with company, position, status, and salary expectations
-- Drag and drop jobs to set their order; saved in Supabase for consistent sorting
-- Track a timeline of comments for each job with timestamps
-- Edit existing comments or add new progress updates
-- View last updated date on every job card
-- Filter by status (wishlist, in progress, archived, all)
-- Pull to refresh the job list
-- Modern UI with floating action button, modal forms, and progress timeline
+- **Google Sign-In**: Secure authentication integrated with Supabase.
+- **Job Management**: Create, view, edit, and delete job applications.
+- **Interactive UI**: Drag-and-drop ordering, animations (Reanimated), and Paper UI components.
+- **Dark Mode Support**: Adapts to system theme preferences.
 
-## Tech Stack
+## Setup Development Build
 
-- React Native with TypeScript
-- Expo
-- Axios for API calls
-- react-native-draggable-flatlist, react-native-gesture-handler, react-native-reanimated
-- Full type safety with TypeScript interfaces and reusable hooks
+Ideally, you should run a Development Build to support native modules (Reanimated, Google Sign-In).
+
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Prebuild & Run**:
+   - For Android (APK):
+     ```bash
+     npx eas build --profile development --platform android
+     ```
+     Install the resulting APK on your device/emulator.
+
+   - Then start the bundler:
+     ```bash
+     npm start
+     ```
+
+## Environment Config
+
+Ensure your `backend` is running and accessible. Update `config.ts` or use `.env` if configured to point to your backend URL (e.g., `http://10.0.2.2:3000` for Emulator).
+
+## Key Libraries
+- **Expo**: Framework
+- **React Native Paper**: UI Components
+- **React Native Reanimated**: Animations
+- **@react-native-google-signin/google-signin**: Authentication
