@@ -2,7 +2,7 @@
     "name": "job-tracking-monorepo",
     "private": true,
     "workspaces": [
-        "frontend",
+        "mobile",
         "web",
         "packages/*"
     ],
